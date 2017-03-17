@@ -45,8 +45,10 @@ class LearningAgent(Agent):
             self.epsilon = 0
             self.alpha = 0
         else:
-            self.epsilon = math.e ** -(0.05 * self.trial_num)
-            #self.alpha = self.epsilon#0.25#math.e ** -(0.01 * self.trial_num)
+            #self.epsilon = math.e ** -(0.05 * self.trial_num)
+            #self.alpha = math.e ** (-.01 * self.trial_num)
+            #self.epsilon = 1 - math.e ** (-8 * self.alpha)
+            self.epsilon = 1 - math.e ** (-8 * (math.e ** (-.01 * self.trial_num)))
 
         return None
 
@@ -65,7 +67,7 @@ class LearningAgent(Agent):
         ###########
         # Set 'state' as a tuple of relevant data for the agent
 
-        state = (waypoint, tuple(inputs.values()))
+        state = (waypoint, inputs['light'], inputs['oncoming'], inputs['left'])
 
         return state
 
@@ -143,14 +145,9 @@ class LearningAgent(Agent):
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
 
         #get max Q for action
-        #newState = self.build_state()
-        #newState = self.build_state()          # Get current state
-        #self.createQ(newState)
         if self.learning:
-            utility = self.get_maxQ(state)
-            qUpdate = reward + utility
             last = self.Q[state][action] * (1 - self.alpha)
-            self.Q[state][action] = last + (self.alpha * qUpdate)
+            self.Q[state][action] = last + (self.alpha * reward)
         return
 
 
@@ -185,7 +182,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent, learning = True, alpha = 0.55)
+    agent = env.create_agent(LearningAgent, learning = True, alpha = 0.9)
 
     ##############
     # Follow the driving agent
@@ -207,7 +204,7 @@ def run():
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test = 5, tolerance = .001)
+    sim.run(n_test = 20, tolerance = .001)
 
 
 if __name__ == '__main__':
