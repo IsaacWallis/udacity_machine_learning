@@ -58,7 +58,7 @@ def agglom(img):
     print("Elapsed time: ", time.time() - t0)
     print("Number of pixels: ", labels.size)
     print("Number of clusters: ", np.unique(labels).size)
-    #plot clusters
+
     display_cluster_avg(img, labels, K)
     #plot_cluster_contours(img, labels, K)
 
@@ -77,19 +77,23 @@ def display_cluster_avg(img, labels, K):
     from matplotlib import pyplot as plt
     import matplotlib.patches as mpatch
     import numpy as np
-    
     plt.figure(figsize=(5, 5))
-
-    #axes = plt.gca()
-    #axes.add_patch(patch)
-    for l in range(K):
-        #l = 4
-        color = np.mean(img[labels == l], axis = 0) / 255.
-        segmentIndices =  np.where(labels == l)
-        plt.scatter(segmentIndices[1], segmentIndices[0], color = color, alpha = 0.5, marker = ",", s = 5)
-
-        plt.contour(labels == l, contours=1,
-                     colors=[color], alpha = 1., linewidths = 0.1)
+    #for l in range(K):
+    l = 0
+    color = np.mean(img[labels == l], axis = 0) / 255.
+    segmentIndices =  np.where(labels == l)
+    #print img[labels == l].shape
+    #print similarity(img[labels == l], np.random.random_integers(0, 255, img[labels == l].shape))
+    #print similarity(img[labels == l], img[labels == l])
+    print similarity(img[labels == l], np.zeros(img[labels == l].shape))    
+    plt.scatter(segmentIndices[1],
+                segmentIndices[0],
+                color = color,
+                alpha = 0.5,
+                marker = ",",
+                s = 5)
+    plt.contour(labels == l, contours=1,
+                colors=[color], alpha = 1., linewidths = 0.1)
     plt.imshow(img, alpha = .5)
     plt.show()
     
