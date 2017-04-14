@@ -1,14 +1,20 @@
+"""
+Provides a class using RL techniques to search a large segment of pixels (such as an image)
+for the patch of pixels which _best_ matches a smaller segment of pixels (such as a patch from 
+a segmenting algorithm).
+"""
 import numpy as np
 
-"""Input: a segment of contiguous pixels to use as a search term, plus a larger segment of contiguous pixels, which could be all of the pixels of an entire image, which is the environment to be searched. This algorithm uses RL to find the location in the larger segment which is MOST similar to the smaller segment."""
-
-def similarity(segment, otherSegment):
+def similarity(patchA, patchB):
     """
     A similarity metric that compares segments of the same shape, pixel-by-pixel.
-    outputs a 0 to 1 similarity value.
+
+    :param patchA: A set of pixels
+    :param patchB:
+    :returns: 0 to 1 float, where 1 means the patches are identical
+    :raises AssertionError: if the patch shapes are not the same
     """
-    if segment.shape != otherSegment.shape:
-        assert "Segments must be of the same shape for similarity metric"
+    assert patchA.shape == patchB.shape
     segment = segment / 255.
     otherSegment = otherSegment / 255.
     error = np.subtract(segment, otherSegment)
@@ -26,32 +32,33 @@ class RlSearch:
     Seeks to train a policy such that the search will be done more quickly with training.
     """
 
-    self.state = np.zeros((3, 1))
+    state = np.zeros((3, 1))
     """
     x, y, and rotation of the agent.
     All zeros indicate that the agent centered in the environment and not rotated.
     """
 
-    self.actionSet = np.zeros((5, 3)) # for a discrete search algorithm
+    actionSet = np.zeros((5, 3)) # for a discrete search algorithm
     """
     rows: 1-step translation. (up, down, left, right, stay)
     columns: 1-step rotation. (cw, ccw, stay)  
     """
-    translationStep = 1
-    rotationStep = np.pi / 18.
     
     def __init__(self, agent, environment):
         """
-        takes a small segment to use as a search agent, and a larger 
-        segment to use as a search environment.
+        Initializes matrices V and Q, 
 
-        Initilizes matrix V, the value per state.
+        :param agent: a patch of pixels to use as search term
+        :param environment: a larger patch of pixels to search over
         """
         self.agent = agent
         self.env = environment
 
-        translation_state_space = (self.env.shape[1] * self.env.shape[0]) / translationStep
-        self.V = np.zeros((translation_state_space, 1))
+        self.translationStep = 1
+        self.rotationStep = np.pi / 18.
+
+        self.translation_state_space = (self.env.shape[1] * self.env.shape[0]) / self.translationStep
+        self.V = np.zeros((self.translation_state_space, 1))
 
     def reward(self):
         """
@@ -88,3 +95,18 @@ class RlSearch:
         pass
 
     
+if __name__ == "__main__":
+    import image_segment
+    import cv2
+    import numpy as np
+    img = cv2.imread('butterfly.jpg')
+    img = cv2.resize(img, (0,0), fx = 0.0625, fy = 0.0625)
+
+    K = 50
+    labels = image_segment.segment(img, K)
+    patch_ndx = 2
+    agent = image_segment.segment_as_patch(img, labels, patch_ndx)
+    env = image_segment.image_as_patch(img)
+
+    #print env.ij
+    #searcher = RlSearch(agent, img)
