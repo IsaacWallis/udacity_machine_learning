@@ -51,10 +51,14 @@ class RlSearch:
         :param agent: a patch of pixels to use as search term
         :param environment: a larger patch of pixels to search over
         """
-        self.agent = search_patch_src
-        self.env = search_env
-        self.indices = patch_indices        
 
+        self.env = search_env
+
+        bbox = self.get_bbox(patch_indices)
+        self.indices = patch_indices[bbox[0] : bbox[1] , bbox[2] : bbox[3]]
+        self.agent = search_patch_src[bbox[0] : bbox[1] , bbox[2] : bbox[3]]
+        
+        self.bbox = np.where(self.indices)
         self.action_space = 5 #up, down, left, right, stay
 
         #state initialized to center of image
@@ -65,37 +69,35 @@ class RlSearch:
         self.e = np.zeros((self.env.shape[0], self.env.shape[1], self.action_space))
 
         self.epsilon = 0.1
-        
-    def reward(self):
+
+    def get_bbox(self, patch_indices):
+        a = np.where(patch_indices)
+        bbox = np.min(a[0]), np.max(a[0]), np.min(a[1]), np.max(a[1])
+        return bbox
+            
+    def reward(self, state):
         """
         Calculates reward based on similarity between image and its environment.
         """
-        test_pixels = self.get_underlying_pixels()
-        sim = similarity(self.agent, test_pixels) #TODO scale this? 
-        return sim        
-
-    def translate(self, x, y):
-        """        
-        Moves the agent in the environment.
-        """
-        pass
-
-    def rotate(self, radians):
-        """
-        Rotates the agent in the environment.
-        """
-        pass
+        test_pixels = self.get_underlying_pixels(state)
+        #print test_pixels
+        #sim = similarity(self.agent, test_pixels) #TODO scale this? 
+        #return sim        
 
     def get_underlying_pixels(self, state):
         """
-        Given the translation and rotation of the agent, return the pixels of the environment
-        that correspond to each pixel of the agent.
-        """        
-        pass
+        Figures out which pixels in the environment correspond to the current position
+        of the pixels in the agent, to be used in similarity metrics.
+
+        :param state: current state of the environment        
+        """
+        x_trans = self.indices[0] + self.state[0]
+        y_trans = self.indices[1] + self.state[1]
+        return self.env[x_trans, y_trans]
 
     def choose_action(self, state):
         """
-        Given matrix Q, chooses next action.
+        Uses Q matrix and e-greedy to choose next action.
 
         :returns: an action from the available set
         """
@@ -127,9 +129,8 @@ class RlSearch:
         print "step"
         a = self.choose_action(self.state)
         s_prime = self.get_next_state(a)
-        #r_prime = self.reward()
-        
-        
+        r_prime = self.reward(s_prime)
+                
     def run(self, terminator):
         """
         Runs steps until termination.
@@ -143,14 +144,17 @@ class RlSearch:
     def display(self):
         from matplotlib import pyplot as plt
         import matplotlib.patches as mpatch
+
         plt.figure(figsize=(5, 5))
         plt.imshow(self.env, alpha = .5)
 
-        x,y =  np.where(self.indices)
-        #c = self.agent[x,y] / 255.,
-        plt.scatter(y,
-                    x,
-                    c = self.agent[x,y] / 255.,
+        x,y = np.where(self.indices)
+        trans_x = x + self.state[0]
+        trans_y = y + self.state[1]
+
+        plt.scatter(trans_y,
+                    trans_x,
+                    c = self.agent[self.indices] / 255.,
                     alpha = 1.0,
                     marker = ".",
                     s = 5)
@@ -178,6 +182,9 @@ if __name__ == "__main__":
 
     img = ndimage.imread('butterfly.jpg')
     img = misc.imresize(img, size = 0.0625)
+    
+    env = ndimage.imread('box-turtle.jpeg')
+    env = misc.imresize(env, size = 0.25)
 
     search_env = img
     patch_src = img
@@ -186,5 +193,5 @@ if __name__ == "__main__":
     patch_indices = labels == 15
 
     searcher = RlSearch(search_env, patch_src, patch_indices)
-    #searcher.run(N_Terminator(10))
+    searcher.run(N_Terminator(10))
     searcher.display()
