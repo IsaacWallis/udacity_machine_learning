@@ -44,22 +44,28 @@ class RlSearch:
     columns: 1-step rotation. (cw, ccw, stay)  
     """
     
-    def __init__(self, agent, environment):
+    def __init__(self, search_env, search_patch_src, patch_indices):
         """
         Initializes matrices V and Q, 
 
         :param agent: a patch of pixels to use as search term
         :param environment: a larger patch of pixels to search over
         """
-        self.agent = agent
-        self.env = environment
+        self.agent = search_patch_src
+        self.env = search_env
+        self.indices = patch_indices        
 
-        self.translationStep = 1
-        self.rotationStep = np.pi / 18.
+        self.action_space = 5 #up, down, left, right, stay
 
-        self.translation_state_space = (self.env.shape[1] * self.env.shape[0]) / self.translationStep
-        self.V = np.zeros((self.translation_state_space, 1))
+        #state initialized to center of image
+        self.state = np.array([ self.env.shape[0] / 2, self.env.shape[1] / 2 ]) 
+        
+        self.action = 0
+        self.Q = np.zeros((self.env.shape[0], self.env.shape[1], self.action_space))
+        self.e = np.zeros((self.env.shape[0], self.env.shape[1], self.action_space))
 
+        self.epsilon = 0.1
+        
     def reward(self):
         """
         Calculates reward based on similarity between image and its environment.
@@ -84,29 +90,101 @@ class RlSearch:
         """
         Given the translation and rotation of the agent, return the pixels of the environment
         that correspond to each pixel of the agent.
-        """
-        
+        """        
         pass
 
+    def choose_action(self, state):
+        """
+        Given matrix Q, chooses next action.
+
+        :returns: an action from the available set
+        """
+        #TODO: make sure searcher can't go off edges of environment
+        maxA = np.argmax(self.Q[state, :])
+        if np.random < self.epsilon: # e-greedy
+            return random.choice(self.Q[state[0], state[1], :])
+        else:
+            return maxA
+
+    def get_next_state(self, action):
+        """        
+        :param action: The action that is changing the state
+        :returns: the new state
+        """
+        action_to_state = {
+            0 : (0, 0), #stay
+            1 : (1, 0), #up
+            2 : (-1, 0), #down
+            3 : (0, 1), #right
+            4 : (0, -1), #left
+        }
+        return self.state + action_to_state[action]
+        
     def step(self):
         """
         Selects an action, calculates next state & reward, updates V or Q.
         """
-        pass
+        print "step"
+        a = self.choose_action(self.state)
+        s_prime = self.get_next_state(a)
+        #r_prime = self.reward()
+        
+        
+    def run(self, terminator):
+        """
+        Runs steps until termination.
 
-    
+        :terminator: A function that return True when termination has been reached.
+        """
+        self.step()
+        if not terminator():
+            self.run(terminator)
+
+    def display(self):
+        from matplotlib import pyplot as plt
+        import matplotlib.patches as mpatch
+        plt.figure(figsize=(5, 5))
+        plt.imshow(self.env, alpha = .5)
+
+        x,y =  np.where(self.indices)
+        #c = self.agent[x,y] / 255.,
+        plt.scatter(y,
+                    x,
+                    c = self.agent[x,y] / 255.,
+                    alpha = 1.0,
+                    marker = ".",
+                    s = 5)
+        plt.show()
+
+
+class N_Terminator:
+    """
+    Terminator class to use as input to RLSearch.run()
+    """
+    def __init__(self, n):
+        """
+        :param n: the number of times this terminator can be called before it returns true.
+        """
+        self.n = n
+        self.inc = 0
+    def __call__(self):
+        self.inc = self.inc + 1
+        return self.inc > self.n
+        
 if __name__ == "__main__":
     import image_segment
-    import cv2
     import numpy as np
-    img = cv2.imread('butterfly.jpg')
-    img = cv2.resize(img, (0,0), fx = 0.0625, fy = 0.0625)
+    from scipy import ndimage, misc
 
+    img = ndimage.imread('butterfly.jpg')
+    img = misc.imresize(img, size = 0.0625)
+
+    search_env = img
+    patch_src = img
     K = 50
     labels = image_segment.segment(img, K)
-    patch_ndx = 2
-    agent = image_segment.segment_as_patch(img, labels, patch_ndx)
-    env = image_segment.image_as_patch(img)
+    patch_indices = labels == 15
 
-    #print env.ij
-    #searcher = RlSearch(agent, img)
+    searcher = RlSearch(search_env, patch_src, patch_indices)
+    #searcher.run(N_Terminator(10))
+    searcher.display()

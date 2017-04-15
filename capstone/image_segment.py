@@ -77,27 +77,6 @@ def display_one_patch(img, labels, label):
                 colors=[color], alpha = 1., linewidths = 0.25)
     plt.imshow(img, alpha = .5)
     plt.show()
-
-
-class Patch:
-    """
-    Data class, holds pixel value information and location indexes for one image segment.
-    """
-    def __init__(self, pixels, indices):
-        """
-        :param pixels: of the image segment in RGB
-        :param indices: location of each pixel in the original image.
-        :raises AssertionError: if the number of pixels and indices do not match.
-        """
-        print pixels.shape[:2],indices.shape[1:]
-        assert pixels.shape[:2] == indices.shape[1:]
-        self.pix = pixels
-        self.ij = indices
-
-    def center_index(self):
-        mean = np.mean(self.ij, axis = 0)
-        #rounded = np.rint(mean)
-        return mean.astype(np.int8)
         
 def segment_as_patch(img, labels, patch_index):
     px = img[labels == patch_index]
@@ -117,6 +96,12 @@ def image_as_patch(img):
     patch = np.reshape(patch, (patch.shape[0] * patch.shape[1], 5))
     return patch
 
+def patch_as_image(patch):
+    size_x = np.max(patch[:, 3]) - np.min(patch[:, 3])
+    size_y = np.max(patch[:, 4]) - np.min(patch[:, 4])
+    patch = np.reshape(patch, (size_x + 1,  size_y + 1, 5))
+    return patch[:, :, :3]
+    
 if __name__ == "__main__":
     from scipy import ndimage, misc
     img = ndimage.imread('butterfly.jpg')
