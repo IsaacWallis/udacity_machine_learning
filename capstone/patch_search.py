@@ -5,23 +5,6 @@ a segmenting algorithm).
 """
 import numpy as np
 
-def similarity(patchA, patchB):
-    """
-    A similarity metric that compares segments of the same shape, pixel-by-pixel.
-
-    :param patchA: A set of pixels
-    :param patchB:
-    :returns: 0 to 1 float, where 1 means the patches are identical
-    :raises AssertionError: if the patch shapes are not the same
-    """
-    assert patchA.shape == patchB.shape
-    segment = segment / 255.
-    otherSegment = otherSegment / 255.
-    error = np.subtract(segment, otherSegment)
-    squVoxelError = error * error
-    pixelError = np.sum(squVoxelError, axis = 1) / 3.
-    totalError = np.sum(pixelError) / len(pixelError)
-    return totalError
 
 class RlSearch:
     """
@@ -62,7 +45,8 @@ class RlSearch:
         self.action_space = 5 #up, down, left, right, stay
 
         #state initialized to center of image
-        self.state = np.array([ self.env.shape[0] / 2, self.env.shape[1] / 2 ]) 
+        self.state = np.array([ self.env.shape[0] / 2, self.env.shape[1] / 2 ])
+        #self.state = np.array([ 0, 0 ]) 
         
         self.action = 0
         self.Q = np.zeros((self.env.shape[0], self.env.shape[1], self.action_space))
@@ -74,15 +58,32 @@ class RlSearch:
         a = np.where(patch_indices)
         bbox = np.min(a[0]), np.max(a[0]), np.min(a[1]), np.max(a[1])
         return bbox
-            
+    
     def reward(self, state):
         """
         Calculates reward based on similarity between image and its environment.
         """
         test_pixels = self.get_underlying_pixels(state)
-        #print test_pixels
-        #sim = similarity(self.agent, test_pixels) #TODO scale this? 
-        #return sim        
+        sim = self.similarity(self.agent[self.indices], test_pixels) #TODO scale this? 
+        return sim
+
+    def similarity(self, patchA, patchB):
+        """
+        A similarity metric that compares segments of the same shape, pixel-by-pixel.
+        
+        :param patchA: A set of pixels
+        :param patchB:
+        :returns: 0 to 1 float, where 1 means the patches are identical
+        :raises AssertionError: if the patch shapes are not the same
+        """
+        assert patchA.shape == patchB.shape
+        segment = patchA / 255.
+        otherSegment = patchB / 255.
+        error = np.subtract(segment, otherSegment)
+        squVoxelError = error * error
+        pixelError = np.sum(squVoxelError, axis = 1) / 3.
+        totalError = np.sum(pixelError) / len(pixelError)
+        return 1.0 - totalError
 
     def get_underlying_pixels(self, state):
         """
@@ -91,9 +92,10 @@ class RlSearch:
 
         :param state: current state of the environment        
         """
-        x_trans = self.indices[0] + self.state[0]
-        y_trans = self.indices[1] + self.state[1]
-        return self.env[x_trans, y_trans]
+        x,y = np.where(self.indices)
+        trans_x = x + self.state[0]
+        trans_y = y + self.state[1]
+        return self.env[trans_x, trans_y]
 
     def choose_action(self, state):
         """
@@ -102,11 +104,16 @@ class RlSearch:
         :returns: an action from the available set
         """
         #TODO: make sure searcher can't go off edges of environment
-        maxA = np.argmax(self.Q[state, :])
+        #TODO: if there are ties for the argmax, do a random choice
+        #maxA = np.argmax(self.Q[self.state[0], self.state[1], :])
+        import random
+        maxQ = np.max(self.Q[self.state[0], self.state[1], :])
+        choices, = np.where(self.Q[self.state[0], self.state[1]] == maxQ)
+        action = random.choice(choices)
         if np.random < self.epsilon: # e-greedy
             return random.choice(self.Q[state[0], state[1], :])
         else:
-            return maxA
+            return action
 
     def get_next_state(self, action):
         """        
@@ -120,17 +127,43 @@ class RlSearch:
             3 : (0, 1), #right
             4 : (0, -1), #left
         }
-        return self.state + action_to_state[action]
+        try:
+            return self.state + action_to_state[action]
+        except KeyError, e:
+            print "KeyError with action: ", action
         
     def step(self):
         """
-        Selects an action, calculates next state & reward, updates V or Q.
+        Selects an action, calculates next state & reward, updates Q.
         """
-        print "step"
-        a = self.choose_action(self.state)
+        s = self.state
+        a = self.action
+
         s_prime = self.get_next_state(a)
-        r_prime = self.reward(s_prime)
-                
+        r = self.reward(s_prime)
+        print "reward ", r
+        a_prime = self.choose_action(s_prime)
+
+        a_star = np.argmax(self.Q[s_prime[0], s_prime[1]])
+        if a_prime == self.Q[s_prime[0], s_prime[1], a_star]:
+            a_star = a_prime            
+
+        discount = 0.9
+        learning = 0.5
+        prime = 0.9
+        delta = r + (discount * self.Q[s_prime[0], s_prime[1], a_star]) - self.Q[s[0], s[1], a]
+        self.e[s[0], s[1], a] = self.e[s[0], s[1], a] + 1
+        for i in range(self.Q.shape[0]):
+            for j in range(self.Q.shape[1]):
+                for k in range(self.Q.shape[2]):
+                    self.Q[i,j,k] = self.Q[s[0], s[1], a] + learning * delta * self.e[s[0], s[1], a]
+                    if a_prime == a_star:
+                        self.e[s[0], s[1], a] = discount * prime * self.e[s[0], s[1], a]
+                    else:
+                        self.e[s[0], s[1], a] = 0
+        self.state = s_prime
+        self.action = a_prime        
+        
     def run(self, terminator):
         """
         Runs steps until termination.
@@ -193,5 +226,6 @@ if __name__ == "__main__":
     patch_indices = labels == 15
 
     searcher = RlSearch(search_env, patch_src, patch_indices)
-    searcher.run(N_Terminator(10))
+    searcher.run(N_Terminator(100))
+    print searcher.Q
     searcher.display()
