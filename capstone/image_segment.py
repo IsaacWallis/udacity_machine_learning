@@ -19,7 +19,10 @@ def segment(img, K):
     print "clustering: K = %d" % K
     t0 = time.time()
     connectivity = grid_to_graph(img.shape[0], img.shape[1])
-    X = np.reshape(img, (img.shape[0] * img.shape[1], img.shape[2]))
+    if len(img.shape) is 3:
+        X = np.reshape(img, (img.shape[0] * img.shape[1], img.shape[2]))
+    elif len(img.shape) is 2:
+        X = np.reshape(img, (img.shape[0] * img.shape[1], 1))
     ward =  AgglomerativeClustering(n_clusters = K, linkage = 'ward',
                                     connectivity = connectivity)
     ward.fit(X)

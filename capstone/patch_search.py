@@ -1,9 +1,13 @@
+import image_segment
+import numpy as np
+from scipy import ndimage, misc
+
+
 """
 Provides a class using RL techniques to search a large segment of pixels (such as an image)
 for the patch of pixels which _best_ matches a smaller segment of pixels (such as a patch from 
 a segmenting algorithm).
 """
-import numpy as np
 
 
 class RlSearch:
@@ -49,7 +53,7 @@ class RlSearch:
         #self.state = np.array([ 0, 0 ]) 
         
         self.action = 0
-        self.Q = np.zeros((self.env.shape[0], self.env.shape[1], self.action_space))
+        self.Q = np.random.random((self.env.shape[0], self.env.shape[1], self.action_space))
         self.e = np.zeros((self.env.shape[0], self.env.shape[1], self.action_space))
 
         self.epsilon = 0.1
@@ -92,9 +96,9 @@ class RlSearch:
 
         :param state: current state of the environment        
         """
-        x,y = np.where(self.indices)
-        trans_x = x + self.state[0]
-        trans_y = y + self.state[1]
+        x_ndcs, y_ndcs = np.where(self.indices)
+        trans_x = x_ndcs + state[0]
+        trans_y = y_ndcs + state[1]
         return self.env[trans_x, trans_y]
 
     def choose_action(self, state):
@@ -104,8 +108,6 @@ class RlSearch:
         :returns: an action from the available set
         """
         #TODO: make sure searcher can't go off edges of environment
-        #TODO: if there are ties for the argmax, do a random choice
-        #maxA = np.argmax(self.Q[self.state[0], self.state[1], :])
         import random
         maxQ = np.max(self.Q[self.state[0], self.state[1], :])
         choices, = np.where(self.Q[self.state[0], self.state[1]] == maxQ)
@@ -132,6 +134,41 @@ class RlSearch:
         except KeyError, e:
             print "KeyError with action: ", action
         
+    def search_exhaustively(self):
+        import time
+        from matplotlib import pyplot as plt
+        heatmap = np.zeros((self.env.shape[0] - self.agent.shape[0], self.env.shape[1] - self.agent.shape[1]))
+        t0 = time.time()
+        for i in range(heatmap.shape[0]):
+            for j in range(heatmap.shape[1]):
+                test_pixels = self.get_underlying_pixels([i,j])
+                sim = self.similarity(self.agent[self.indices], test_pixels) #TODO scale this? 
+                heatmap[i,j] = sim
+        print("Elapsed time: ", time.time() - t0)
+        fig1 = plt.figure(figsize=(5, 5))
+        ax1 = fig1.add_subplot(211)
+        ax1.imshow(heatmap, alpha = 1.0)
+
+        max_ndx = np.unravel_index(np.argmax(heatmap), heatmap.shape)
+        ax1.scatter(max_ndx[1], max_ndx[0], c='red', marker="x")
+        print max_ndx
+        
+        ax2 = fig1.add_subplot(212)
+        ax2.imshow(self.env, alpha = .5)
+
+        x,y = np.where(self.indices)
+        trans_x = x + self.state[0]
+        trans_y = y + self.state[1]
+
+        ax2.scatter(trans_y,
+                    trans_x,
+                    c = self.agent[self.indices] / 255.,
+                    alpha = 1.0,
+                    marker = ".",
+                    s = 5)
+        plt.show()
+
+        
     def step(self):
         """
         Selects an action, calculates next state & reward, updates Q.
@@ -156,7 +193,7 @@ class RlSearch:
         for i in range(self.Q.shape[0]):
             for j in range(self.Q.shape[1]):
                 for k in range(self.Q.shape[2]):
-                    self.Q[i,j,k] = self.Q[s[0], s[1], a] + learning * delta * self.e[s[0], s[1], a]
+                    self.Q[i,j,k] = self.Q[s[0], s[1], k] + learning * delta * self.e[s[0], s[1], a]
                     if a_prime == a_star:
                         self.e[s[0], s[1], a] = discount * prime * self.e[s[0], s[1], a]
                     else:
@@ -174,6 +211,7 @@ class RlSearch:
         if not terminator():
             self.run(terminator)
 
+        
     def display(self):
         from matplotlib import pyplot as plt
         import matplotlib.patches as mpatch
@@ -193,6 +231,37 @@ class RlSearch:
                     s = 5)
         plt.show()
 
+def search_smartly():
+    img = ndimage.imread('butterfly.jpg')
+    img = misc.imresize(img, size = 0.0625)
+    
+    env = ndimage.imread('box-turtle.jpeg')
+    env = misc.imresize(env, size = 0.25)
+
+    search_env = img
+    patch_src = img
+    K = 50
+    labels = image_segment.segment(img, K)
+    patch_indices = labels == 15
+
+    searcher = RlSearch(search_env, patch_src, patch_indices)
+    searcher.run(N_Terminator(200))
+    print searcher.Q
+    print searcher.state
+    searcher.display()
+    
+def search_exhaustively():
+    img = ndimage.imread('butterfly.jpg')
+    img = misc.imresize(img, size = 0.125)
+    search_env = img
+    patch_src = img
+    K = 50
+    labels = image_segment.segment(img, K)
+    patch_indices = labels == 49
+
+    searcher = RlSearch(search_env, patch_src, patch_indices)
+    
+    searcher.search_exhaustively()    
 
 class N_Terminator:
     """
@@ -207,25 +276,6 @@ class N_Terminator:
     def __call__(self):
         self.inc = self.inc + 1
         return self.inc > self.n
-        
-if __name__ == "__main__":
-    import image_segment
-    import numpy as np
-    from scipy import ndimage, misc
-
-    img = ndimage.imread('butterfly.jpg')
-    img = misc.imresize(img, size = 0.0625)
     
-    env = ndimage.imread('box-turtle.jpeg')
-    env = misc.imresize(env, size = 0.25)
-
-    search_env = img
-    patch_src = img
-    K = 50
-    labels = image_segment.segment(img, K)
-    patch_indices = labels == 15
-
-    searcher = RlSearch(search_env, patch_src, patch_indices)
-    searcher.run(N_Terminator(100))
-    print searcher.Q
-    searcher.display()
+if __name__ == "__main__":
+    search_exhaustively()
