@@ -253,11 +253,15 @@ def search_smartly():
 def search_exhaustively():
     img = ndimage.imread('butterfly.jpg')
     img = misc.imresize(img, size = 0.125)
-    search_env = img
+    
+    env = ndimage.imread('box-turtle.jpeg')
+    env = misc.imresize(env, size = 1.0)
+
+    search_env = env
     patch_src = img
     K = 50
     labels = image_segment.segment(img, K)
-    patch_indices = labels == 49
+    patch_indices = labels == 15
 
     searcher = RlSearch(search_env, patch_src, patch_indices)
     
