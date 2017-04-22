@@ -10,7 +10,7 @@ apiKey='AIzaSyCSp5VA5cjQTRKDvPjOTNfFvJtVofvGcNA'
 
 src_directory = "./src"
 
-q = "kitten"
+q = "cute kitten"
 
 def download(link, mime):
       try:
