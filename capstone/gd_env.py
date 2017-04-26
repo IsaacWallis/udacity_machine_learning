@@ -19,7 +19,7 @@ class Env:
         rounded =  np.rint(state).astype(np.int8)
         x_indices = self.agent.indices[0] + rounded[0]
         y_indices = self.agent.indices[1] + rounded[1]
-        envPix = self.image[x_indices, y_indices, :]# / 255.
+        envPix = self.image[x_indices, y_indices, :] / 255.
         agPix = self.agent.pixels / 255.
         e = envPix - agPix
         e = e * e

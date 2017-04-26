@@ -3,6 +3,9 @@ Utility module with function for segmenting images into contiguous patches, and 
 the results.
 """
 import numpy as np
+import pickle
+
+segmented_dir = "./segmented/"
 
 def segment(img, K):
     """
@@ -32,6 +35,48 @@ def segment(img, K):
     print("Number of clusters: ", np.unique(labels).size)
     return labels
 
+def get_segmented_img(name, K):
+    """
+    Gets a segmented image from file if the file exists. If not, segments the image
+    and writes a segment file for next time.
+    
+    :param name: The name of the image file to segment, without suffix. Image file must exist. 
+    :param K: number of segments desired
+    :returns: A dictionary with the data from a segmented image
+    """
+    import os.path
+    from scipy import ndimage, misc
+    img = ndimage.imread(name + '.jpg')    
+    if os.path.isfile(segmented_dir + name + '.segmented'):
+        segment_data = read_segment_file(segmented_dir + name + '.segmented')
+        pix = segment_data["pixels"]
+        labels = segment_data["labels"]
+        if K != (np.max(labels) + 1) or img.shape != pix.shape:
+            print "segment file parameters don't match, remaking."
+            print "K:",K, np.max(labels) + 1
+            print "shape:",img.shape, pix.shape
+        else:
+            return segment_data            
+    labels = segment(img, K)
+    segment_data = {
+        "pixels" : img,
+        "labels" : labels
+        }
+    write_segment_file(segmented_dir + name + '.segmented', segment_data)
+    return segment_data
+        
+def write_segment_file(name, data):
+    output = open(name, 'ab+')
+    pickle.dump(data, output)
+    output.close()
+
+def read_segment_file(name):
+    output = open(name, 'rb')
+    print "o", output
+    data = pickle.load(output)
+    output.close()
+    return data
+    
 def display_all_patches(img, labels, K):
     """
     Displays clusters on a plot.

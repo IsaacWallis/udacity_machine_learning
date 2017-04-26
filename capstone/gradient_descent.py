@@ -1,30 +1,28 @@
-from scipy import ndimage, misc
 import image_segment
 from gd_env import Env, GD_Searcher
 import numpy as np
+import os.path
 
 if __name__ == "__main__":
-    img = ndimage.imread('butterfly.jpg')
-    img = misc.imresize(img, size = 0.0625)
-
-    search_env = img
-    patch_src = img
-    K = 50
-    labels = image_segment.segment(img, K)
+    img_name = 'butterfly'
+    K = 150
+    seg_data = image_segment.get_segmented_img(img_name, K)
+    labels = seg_data["labels"]
+    pixels = seg_data["pixels"]
+           
     label = 15
     patch_indices = np.where(labels == label)
-    patch_pixels = img[patch_indices]
-    
+    patch_pixels = pixels[patch_indices]    
     indices_at_origin = (patch_indices[0] - np.min(patch_indices[0]),
                          patch_indices[1] - np.min(patch_indices[1]))
 
     agent = GD_Searcher(patch_pixels, indices_at_origin)
-    env = Env(img, agent)
+    env = Env(pixels, agent)
 
 
     print "Starting"
     state = env.init_episode()
-    gamma = .01
+    gamma = 10.0
     error = env.calculate_error(state)
     try:
         while True:
