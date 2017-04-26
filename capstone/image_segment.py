@@ -77,7 +77,7 @@ def read_segment_file(name):
     output.close()
     return data
     
-def display_all_patches(img, labels, K):
+def display_all_patches(img, labels):
     """
     Displays clusters on a plot.
 
@@ -88,7 +88,7 @@ def display_all_patches(img, labels, K):
     from matplotlib import pyplot as plt
     import matplotlib.patches as mpatch
     plt.figure(figsize=(5, 5))
-    for l in range(K):
+    for l in range(np.max(labels) + 1):
         color = np.mean(img[labels == l], axis = 0) / 255.
         segmentIndices =  np.where(labels == l)
         plt.scatter(segmentIndices[1],

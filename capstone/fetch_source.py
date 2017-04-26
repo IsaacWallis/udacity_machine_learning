@@ -10,7 +10,7 @@ apiKey='AIzaSyCSp5VA5cjQTRKDvPjOTNfFvJtVofvGcNA'
 
 src_directory = "./src"
 
-q = "cute kitten"
+q = "landscape"
 
 def download(link, mime):
       try:
@@ -29,16 +29,18 @@ def download(link, mime):
             print "could not load : "+link
             print e
 
+
 def main():
       shutil.rmtree(src_directory)
       os.makedirs(src_directory)
 
       service = build("customsearch", "v1", developerKey=apiKey)
-      res = service.cse().list(q=q, cx=cx, searchType="image", fileType="jpg",).execute()
-      for item in res['items']:
-            mime = item['mime']
-            link = item['link']
-            download(link, mime)
+      for i in range(5):
+            res = service.cse().list(q=q, cx=cx, searchType="image", fileType="jpg", lowRange=(i*10)+1).execute()     
+            for item in res['items']:
+                  mime = item['mime']
+                  link = item['link']
+                  download(link, mime)
             
 if __name__ == '__main__':
       main()
