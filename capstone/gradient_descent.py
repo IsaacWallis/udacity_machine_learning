@@ -122,20 +122,32 @@ class Env:
     def get_heatmap(self):
         return self.heatmap
     
+def multi(env_pixels, patch_pixels, patch_indices):
+    env = Env(env_pixels, patch_pixels, patch_indices)
+    max_t = 100
+    for i in range(4):
+        init = envv.get_random_state()
+        state, reward, t = env.start_agent(initState = init, maxT = max_t)
+
 def multi_gradient_descent(env_pixels, patch_pixels, patch_indices):
     env = Env(env_pixels, patch_pixels, patch_indices)
     initStateA = env.get_random_state()
     initStateB = env.get_random_state()
-    stateA, rewardA, tA = env.start_agent(initState = initStateA, maxT = 50)
-    stateB, rewardB, tB = env.start_agent(initState = initStateB, maxT = 50)
-    for i in range(20):        
+    max_t = 150
+    stateA, rewardA, tA = env.start_agent(initState = initStateA, maxT = max_t)
+    stateB, rewardB, tB = env.start_agent(initState = initStateB, maxT = max_t)
+    for i in range(50):        
         if rewardA < rewardB:
-            stateB, rewardB, tB = env.start_agent( maxT = 50)
+            avg =  (initStateB + stateA) / 2
+            initStateB = avg
+            stateB, rewardB, tB = env.start_agent(initState = initStateB,  maxT = max_t)
         elif rewardB < rewardA:
-            stateA, rewardA, tA = env.start_agent( maxT = 50)
-            
-    import patch_search
-    patch_search.plot_heatmap(env.get_heatmap())
+            avg =  (initStateA + stateB) / 2
+            initStateA = avg
+            stateA, rewardA, tA = env.start_agent(initState = initStateA,  maxT = max_t)
+
+    return bestState, smallestError, convergenceAtBest                    
+
 
 if __name__ == "__main__":
     img_name = 'butterfly'

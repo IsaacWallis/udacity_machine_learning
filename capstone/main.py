@@ -25,17 +25,21 @@ if __name__ == "__main__":
     max_label = np.max(labels)
     hist = np.histogram(labels, bins = max_label)
     order = np.flip(np.argsort(hist[0]), 0)
-
+    
     for label in order:        
         labelled_indices = np.where(labels == label)
         patch_pixels = pixels[labelled_indices]    
         patch_indices = (patch_indices[0] - np.min(patch_indices[0]),
                              patch_indices[1] - np.min(patch_indices[1]))
-
-        src_img_index = random.choice(img_num_list)
-        env_pixels = ndimage.imread("./src/img_%i.jpg" % src_img_index)    
-
         
-        best_src_patch = patch_search(env_pixels, patch_pixels, patch_indices)
+        src_img_index = random.choice(img_num_list)
+        env_pixels = ndimage.imread("./src/img_%i.jpg" % src_img_index)            
+        best_src_patch, value = gradient_descent.grad_descent(env_pixels, patch_pixels, patch_indices)
+        patchProgressFile = get_file_for_patch(label)
+
+        #pseudocode
+        if src_img_index in patchProgressFile:
+            del(src_img_index)
+        patchProgressFile.writeline(src_img_index, best_src_patch, value)
         
         print patch_index
