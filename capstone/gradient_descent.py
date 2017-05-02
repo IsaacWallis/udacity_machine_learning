@@ -13,8 +13,8 @@ class Env:
         self.image = image
         self.agent_pixels = agent_pixels
         self.agent_indices = agent_indices
-        self.heatmap = np.zeros((env_pixels.shape[0] - np.max(agent_indices[0]),
-                                 env_pixels.shape[1] - np.max(agent_indices[1])))
+        self.heatmap = np.zeros((image.shape[0] - np.max(agent_indices[0]),
+                                 image.shape[1] - np.max(agent_indices[1])))
         # defines small step value for each element of the state
         self.epsilon = {
             0: np.array([1, 0]),
@@ -88,9 +88,9 @@ class Env:
         start = time.time()
 
         velocity = np.zeros(state.shape)
-        smallestError = sys.float_info.max
-        bestState = state
-        convergenceAtBest = 0
+        smallest_error = sys.float_info.max
+        best_state = state
+        convergence_at_best = 0
 
         error_axis = []
         time_axis = []
@@ -106,10 +106,10 @@ class Env:
             if plot:
                 error_axis.append(error_prime)
                 time_axis.append(count)
-            if error_prime < smallestError:
-                smallestError = error_prime
-                bestState = state
-                convergenceAtBest = count
+            if error_prime < smallest_error:
+                smallest_error = error_prime
+                best_state = state
+                convergence_at_best = count
 
             improvement = error - error_prime
             error = error_prime
@@ -117,7 +117,7 @@ class Env:
         if plot:
             plt.plot(time_axis, error_axis)
             plt.show()
-        return bestState, smallestError, convergenceAtBest
+        return best_state, smallest_error, convergence_at_best
 
     def get_heatmap(self):
         return self.heatmap

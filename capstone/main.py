@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
         src_img_index = random.choice(img_num_list)
         env_pixels = file_handling.get_source_image(src_img_index)
-        best_src_patch, value = gradient_descent.grad_descent(env_pixels, patch_pixels, patch_indices)
+        best_src_patch, value = gradient_descent.multi_gradient_descent(env_pixels, patch_pixels, patch_indices, 5)
         seg_data["patch_%i" % label]["visits"][src_img_index] = (best_src_patch, value)
 
     file_handling.write_seg_file(seg_data)
