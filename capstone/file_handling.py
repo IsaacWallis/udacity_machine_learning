@@ -6,6 +6,7 @@ segmented_dir = "./segmented"
 main_dir = "./progress"
 segment_file_name = "segment.pickle"
 image_dir = "./images"
+source_dir_name = "source"
 
 
 def get_project_directory(name):
@@ -55,10 +56,26 @@ def read_segment_file(name):
         raise IOError("Can't read project, it doesn't exist.")
 
 
-def get_image(name):
+def get_target_image(name):
     path = os.path.join(image_dir, name + ".jpg")
     img = ndimage.imread(path)
     return img
+
+
+def get_source_image(index):
+    path = os.path.join(image_dir, source_dir_name, "img_%i.jpg" % index)
+    img = ndimage.imread(path)
+    return img
+
+
+def get_source_indices():
+    img_num_list = []
+    for src_img in os.listdir(os.path.join(image_dir, source_dir_name)):
+        if "jpg" in src_img:
+            img_name = os.path.splitext(src_img)[0]
+            img_num = img_name.split("_")[1]
+            img_num_list.append(int(img_num))
+    return img_num_list
 
 if __name__ == "__main__":
     pass

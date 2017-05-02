@@ -8,7 +8,7 @@ import shutil
 cx = '003798233075176445716:gkxn-iv6be0'
 apiKey='AIzaSyCSp5VA5cjQTRKDvPjOTNfFvJtVofvGcNA'
 
-src_directory = "./src"
+src_directory = "./source"
 
 q = "landscape"
 

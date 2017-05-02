@@ -1,12 +1,10 @@
-import image_segment
-from gd_env import Env, GD_Searcher
-import numpy as np
-import os
-import time
 import random
-from scipy import ndimage, misc
+import numpy as np
+import file_handling
+import gradient_descent
+import image_segment
 
-src_dir = "./src"
+src_dir = "./source"
 
 if __name__ == "__main__":
     img_name = 'butterfly'
@@ -15,26 +13,21 @@ if __name__ == "__main__":
     labels = seg_data["labels"]
     pixels = seg_data["pixels"]
 
-    img_num_list = []
-    for src_img in os.listdir(src_dir):
-        if "jpg" in src_img:            
-            img_name = os.path.splitext(src_img)[0]
-            img_num = img_name.split("_")[1]
-            img_num_list.append(int(img_num))
+    img_num_list = file_handling.get_source_indices()
 
     max_label = np.max(labels)
-    hist = np.histogram(labels, bins = max_label)
+    hist = np.histogram(labels, bins=max_label)
     order = np.flip(np.argsort(hist[0]), 0)
-    
-    for label in order:        
+
+    for label in order:
         labelled_indices = np.where(labels == label)
-        patch_pixels = pixels[labelled_indices]    
+        patch_pixels = pixels[labelled_indices]
         patch_indices = (labelled_indices[0] - np.min(labelled_indices[0]),
                          labelled_indices[1] - np.min(labelled_indices[1]))
-        
+
         src_img_index = random.choice(img_num_list)
-        env_pixels = ndimage.imread("./src/img_%i.jpg" % src_img_index)            
+        env_pixels = file_handling.get_source_image(src_img_index)
         best_src_patch, value = gradient_descent.grad_descent(env_pixels, patch_pixels, patch_indices)
         seg_data["patch_%i" % label]["visits"][src_img_index] = (best_src_patch, value)
-        
+
     file_handling.write_seg_file(seg_data)

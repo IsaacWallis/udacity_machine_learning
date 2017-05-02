@@ -47,7 +47,7 @@ class Background:
         )
                 
 if __name__ == "__main__":
-    env_pixels = ndimage.imread("./src/img_2.jpg")
+    env_pixels = ndimage.imread("./source/img_2.jpg")
     canvas = Image.new('RGBA', (env_pixels.shape[1],  env_pixels.shape[0]), (0,0,0,255))
     #canvas.show()
 

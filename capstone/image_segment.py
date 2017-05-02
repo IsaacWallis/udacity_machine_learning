@@ -6,28 +6,28 @@ import numpy as np
 import file_handling
 
 
-def segment(img, K):
+def segment(img, k):
     """
     Agglomerative segmenting. 
     
     :param img: An RGB image
-    :param K: the number of clusters required
+    :param k: the number of clusters required
 
     :returns: A matrix of the same height and width as img. Each element is one of K labels
     """
     from sklearn.cluster import AgglomerativeClustering
     from sklearn.feature_extraction.image import grid_to_graph
     import time
-    print "clustering: K = %d" % K
+    print "clustering: K = %d" % k
     t0 = time.time()
     connectivity = grid_to_graph(img.shape[0], img.shape[1])
     if len(img.shape) is 3:
-        X = np.reshape(img, (img.shape[0] * img.shape[1], img.shape[2]))
+        x = np.reshape(img, (img.shape[0] * img.shape[1], img.shape[2]))
     elif len(img.shape) is 2:
-        X = np.reshape(img, (img.shape[0] * img.shape[1], 1))
-    ward = AgglomerativeClustering(n_clusters=K, linkage='ward',
+        x = np.reshape(img, (img.shape[0] * img.shape[1], 1))
+    ward = AgglomerativeClustering(n_clusters=k, linkage='ward',
                                    connectivity=connectivity)
-    ward.fit(X)
+    ward.fit(x)
     labels = np.reshape(ward.labels_, (img.shape[0], img.shape[1]))
     print("Elapsed time: ", time.time() - t0)
     print("Number of pixels: ", labels.size)
@@ -92,7 +92,7 @@ def get_segmented_image(name, k):
     :param k: number of segments desired
     :returns: A dictionary with the data from a segmented image
     """
-    img = file_handling.get_image("small_butterfly")
+    img = file_handling.get_target_image("small_butterfly")
     if file_handling.project_exists(name):
         print "opening project"
         segment_data = file_handling.read_segment_file(name)
