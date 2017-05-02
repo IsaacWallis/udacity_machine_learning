@@ -5,6 +5,7 @@ the results.
 import numpy as np
 import file_handling
 
+
 def segment(img, K):
     """
     Agglomerative segmenting. 
@@ -33,6 +34,7 @@ def segment(img, K):
     print("Number of clusters: ", np.unique(labels).size)
     return labels
 
+
 def display_all_patches(img, labels):
     """
     Displays clusters on a plot.
@@ -57,6 +59,7 @@ def display_all_patches(img, labels):
                     colors=[color], alpha = 1., linewidths = 0.1)
     plt.imshow(img, alpha = .5)
     plt.show()
+
 
 def display_one_patch(img, labels, label):
     """
@@ -108,13 +111,26 @@ def get_segmented_image(name, K):
         else:
             return segment_data
     labels = segment(img, K)
-    segment_data = {
-        "pixels" : img,
-        "labels" : labels
-        }
+    segment_data = init_project_dict(img, labels)
     file_handling.write_segment_file(name, segment_data)
     return segment_data           
-    
+
+
+def init_project_dict(pixels, labels):
+    segment_data = {
+        "pixels" : pixels,
+        "labels" : labels
+        }
+    max_label = np.max(labels)
+    hist = np.histogram(labels, bins = max_label)
+    order = np.flip(np.argsort(hist[0]), 0)
+    for i in order:
+        key = "patch_%i" % i
+        segment_data[key] = {}
+        segment_data[key]["size"] = hist[0][i]
+        segment_data[key]["visits"] = {}
+    return segment_data
+        
 if __name__ == "__main__":
     segData = get_segmented_image('small_butterfly', 50)
     display_all_patches(segData["pixels"], segData["labels"])
