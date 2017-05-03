@@ -50,26 +50,19 @@ def set_sql_path(name):
     Base.metadata.create_all(engine)
     return Session()
 
+def get_session():
+    return Session()
 
-def get_target_image(name):
-    session = Session()
-    target_image = session.query(TargetImage).filter_by(name=name).one()
-    return target_image
-
-
-if __name__ == "__main__":
-    import image_segment
-    import os
-    from scipy import ndimage
+def get_target_image(name, k):
     import numpy as np
-
-    name = "small_butterfly"
     session = set_sql_path(name)
     target_image = session.query(TargetImage).filter_by(name=name).first()
-
-    k = 50
     if k != (np.max(target_image.labels) + 1):
-        print "resaving target image"
+        import image_segment
+        import os
+        from scipy import ndimage
+
+        print "k differs, resaving target image"
         image_dir = "./images"
 
         path = os.path.join(image_dir, name + ".jpg")
@@ -79,8 +72,10 @@ if __name__ == "__main__":
         target_image = TargetImage(name=name, pixels=img, labels=labels)
         session.merge(target_image)
         session.commit()
+    return target_image
 
 
-
-
-    print session
+if __name__ == "__main__":
+    name = "small_butterfly"
+    k = 60
+    print get_target_image(name, k)

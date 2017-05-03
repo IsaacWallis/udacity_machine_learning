@@ -86,11 +86,6 @@ def get_source_indices():
 
     return img_num_list
 
-
-def init_sql(project_name):
-    sqlalchemy.create_engine('sqlite:///:memory:', echo=True)
-    
-
 def get_saved_progress(project_name, patch):
     path = os.path.join(get_project_directory(project_name), progress_file_name)
     if os.path.exists(path):
