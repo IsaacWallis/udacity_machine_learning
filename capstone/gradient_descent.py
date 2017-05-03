@@ -13,8 +13,15 @@ class Env:
         self.image = image
         self.agent_pixels = agent_pixels
         self.agent_indices = agent_indices
-        self.heatmap = np.zeros((image.shape[0] - np.max(agent_indices[0]),
-                                 image.shape[1] - np.max(agent_indices[1])))
+        agent_max_x = np.max(agent_indices[0])
+        agent_max_y = np.max(agent_indices[1])
+        heatmap_size_x = image.shape[0] - agent_max_x
+        heatmap_size_y = image.shape[1] - agent_max_y
+
+        if heatmap_size_y < 0 or heatmap_size_x < 0:
+            assert "Agent of size %i %i too large for env of size %i %i" % \
+                   (agent_max_x, agent_max_y, image.shape[0], image.shape[1])
+        self.heatmap = np.zeros((heatmap_size_x, heatmap_size_y))
         # defines small step value for each element of the state
         self.epsilon = {
             0: np.array([1, 0]),
@@ -25,9 +32,9 @@ class Env:
         rounded = np.rint(state).astype(np.int8)
         x_indices = self.agent_indices[0] + rounded[0]
         y_indices = self.agent_indices[1] + rounded[1]
-        envPix = self.image[x_indices, y_indices, :] / 255.
-        agPix = self.agent_pixels / 255.
-        e = envPix - agPix
+        env_pix = self.image[x_indices, y_indices, :] / 255.
+        ag_pix = self.agent_pixels / 255.
+        e = env_pix - ag_pix
         e = e * e
         e = np.sum(e, axis=1) / 3.
         error = np.sum(e) / len(e)

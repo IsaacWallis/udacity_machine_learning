@@ -1,13 +1,15 @@
 import os
 import pickle
 from scipy import ndimage
+import pandas as pd
+import sqlalchemy
 
 segmented_dir = "./segmented"
 main_dir = "./progress"
-segment_file_name = "segment.pickle"
 image_dir = "./images"
 source_dir_name = "source"
-
+segment_file_name = "segment.pickle"
+progress_file_name = "progress.pickle"
 
 def get_project_directory(name):
     if not os.path.exists(main_dir):
@@ -83,6 +85,28 @@ def get_source_indices():
             img_num_list.append(int(img_num))
 
     return img_num_list
+
+
+def init_sql(project_name):
+    sqlalchemy.create_engine('sqlite:///:memory:', echo=True)
+    
+
+def get_saved_progress(project_name, patch):
+    path = os.path.join(get_project_directory(project_name), progress_file_name)
+    if os.path.exists(path):
+        progress = pd.read_csv(path)
+        return progress
+    else:
+        init = pd.Dataframe(columns=["state", "loss", "t"])
+        return init
+
+
+def add_progress(name, patch, state, loss, t):
+    path = os.path.join(get_project_directory(name), progress_file_name)
+    progress = get_saved_progress(name)
+    current_t = progress.loc[patch]["t"]
+    progress.loc[patch]["t"] = [state, loss, current_t + t]
+    progress.to_csv(path)
 
 if __name__ == "__main__":
     pass

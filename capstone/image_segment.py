@@ -110,6 +110,11 @@ def get_segmented_image(name, k):
     file_handling.write_segment_file(name, segment_data)
     return segment_data
 
+def check_parameters(labels, k, shape):
+    if k != (np.max(labels) + 1) or labels.shape != shape:
+        return False
+    else:
+        return True
 
 def sort_patch_indices(labels):
     max_label = np.max(labels)
