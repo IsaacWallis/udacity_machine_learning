@@ -158,11 +158,12 @@ def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
 
 
 if __name__ == "__main__":
+    import sql_model
     img_name = 'butterfly'
     K = 150
-    seg_data = image_segment.get_segmented_image(img_name, K)
-    labels = seg_data["labels"]
-    env_pixels = seg_data["pixels"]
+    target_image = sql_model.get_target_image(img_name, K)
+    labels = target_image.labels
+    env_pixels = target_image.pixels
 
     label = 12
     patch_indices = np.where(labels == label)
