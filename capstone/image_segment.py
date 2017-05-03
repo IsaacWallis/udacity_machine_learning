@@ -111,6 +111,13 @@ def get_segmented_image(name, k):
     return segment_data
 
 
+def sort_patch_indices(labels):
+    max_label = np.max(labels)
+    hist = np.histogram(labels, bins=max_label)
+    sorted_list = np.flip(np.argsort(hist[0]), 0)
+    return sorted_list
+
+
 def init_project_dict(pixels, labels):
     segment_data = {
         "pixels": pixels,

@@ -126,7 +126,7 @@ class Env:
 def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
     env = Env(env_pixels, patch_pixels, patch_indices)
     agent_dict = {}
-    max_t = 150
+    max_t = 50
     import pandas as pd
     data_frame = pd.DataFrame(columns=["s", "s_prime", "r_prime", "t_prime"])
     for i in range(num_agents):
@@ -134,7 +134,7 @@ def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
         initial_state = env.get_random_state()
         state, reward, t = env.start_agent(initState=initial_state, maxT=max_t)
         data_frame.loc[i] = [initial_state, state, reward, t]
-    for i in range(100):
+    for i in range(200):
         best = data_frame["r_prime"].idxmax()
         worst = data_frame["r_prime"].idxmin()
         best_init_state = data_frame.iloc[best]["s"]
@@ -145,8 +145,8 @@ def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
     best_final_index = data_frame["r_prime"].idxmax()
     data_frame.iloc[best_final_index]
 
-    import patch_search
-    patch_search.plot_heatmap(env.heatmap)
+    # import patch_search
+    # patch_search.plot_heatmap(env.heatmap)
     return data_frame.iloc[best_final_index]["s_prime"], data_frame.iloc[best_final_index]["r_prime"]
 
 

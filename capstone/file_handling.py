@@ -38,6 +38,12 @@ def write_segment_file(name, data):
     output.close()
 
 
+def replace_segment_file(name, data):
+    if project_exists(name):
+        remove_segment_file(name)
+    write_segment_file(name, data)
+
+
 def remove_segment_file(name):
     project_path = get_project_directory(name)
     segment_file_path = os.path.join(project_path, segment_file_name)
@@ -75,6 +81,7 @@ def get_source_indices():
             img_name = os.path.splitext(src_img)[0]
             img_num = img_name.split("_")[1]
             img_num_list.append(int(img_num))
+
     return img_num_list
 
 if __name__ == "__main__":
