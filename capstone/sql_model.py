@@ -35,7 +35,7 @@ class State(Base):
     __tablename__ = 'state'
     id = Column(Integer, primary_key=True)
     searching_patch_name = Column(Integer, ForeignKey("target_patch.id"))
-    source = ForeignKey("source_image.id")
+    source = Column(Integer, ForeignKey("source_image.id"))
     translation_x = Column(Integer)
     translation_y = Column(Integer)
     loss = Column(Float)
@@ -45,7 +45,7 @@ class State(Base):
 
 
 def set_sql_path(name):
-    engine = create_engine('sqlite:///progress/%s.sqlite' % name, echo=True)
+    engine = create_engine('sqlite:///progress/%s.sqlite' % name, echo=False)
     Session.configure(bind=engine)
     Base.metadata.create_all(engine)
     return Session()
@@ -57,23 +57,29 @@ def get_target_image(name, k):
     import numpy as np
     session = set_sql_path(name)
     target_image = session.query(TargetImage).filter_by(name=name).first()
+    if target_image is None:
+        print "Making new project file"
+        return make_project_file(name, k, session)
     if k != (np.max(target_image.labels) + 1):
-        import image_segment
-        import os
-        from scipy import ndimage
-
         print "k differs, resaving target image"
-        image_dir = "./images"
-
-        path = os.path.join(image_dir, name + ".jpg")
-        img = ndimage.imread(path)
-        labels = image_segment.segment(img, k)
-
-        target_image = TargetImage(name=name, pixels=img, labels=labels)
-        session.merge(target_image)
-        session.commit()
+        return make_project_file(name, k, session)
     return target_image
 
+
+def make_project_file(name, k, session):
+    import image_segment
+    import os
+    from scipy import ndimage
+    image_dir = "./images"
+
+    path = os.path.join(image_dir, name + ".jpg")
+    img = ndimage.imread(path)
+    labels = image_segment.segment(img, k)
+
+    target_image = TargetImage(name=name, pixels=img, labels=labels)
+    session.merge(target_image)
+    session.commit()
+    return target_image
 
 if __name__ == "__main__":
     name = "small_butterfly"
