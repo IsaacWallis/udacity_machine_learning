@@ -15,8 +15,11 @@ class Env:
         self.agent_indices = agent_indices
         agent_max_x = np.max(agent_indices[0])
         agent_max_y = np.max(agent_indices[1])
-        heatmap_size_x = image.shape[0] - agent_max_x
-        heatmap_size_y = image.shape[1] - agent_max_y
+        try:
+            heatmap_size_x = image.shape[0] - agent_max_x
+            heatmap_size_y = image.shape[1] - agent_max_y
+        except IndexError:
+            raise IndexError("shape %s max x %i max y %i" % (image.shape, agent_max_x, agent_max_y))
 
         if heatmap_size_y < 0 or heatmap_size_x < 0:
             assert "Agent of size %i %i too large for env of size %i %i" % \

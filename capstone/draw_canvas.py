@@ -2,7 +2,6 @@ import numpy as np
 import pyglet
 from PIL import Image
 from pyglet.gl import *
-from scipy import ndimage
 
 
 class App:
@@ -54,10 +53,10 @@ class Background:
                              )
 
 
-if __name__ == "__main__":
-    env_pixels = ndimage.imread("./source/img_2.jpg")
+def temp_test_image_draw():
+    import file_handling
+    env_pixels = file_handling.get_source_image(2)
     canvas = Image.new('RGBA', (env_pixels.shape[1], env_pixels.shape[0]), (0, 0, 0, 255))
-    # canvas.show()
 
     window = pyglet.window.Window(env_pixels.shape[1], env_pixels.shape[0])
 
@@ -80,12 +79,24 @@ if __name__ == "__main__":
                                               ('c3B', pix_reshaped)
                                               )
 
-
     @window.event
     def on_draw():
         window.clear()
         vertex_list.draw(pyglet.gl.GL_POINTS)
         label.draw()
 
-
     pyglet.app.run()
+
+if __name__ == "__main__":
+    #temp_test_image_draw()
+
+    import sql_model
+    img_name = 'small_butterfly'
+    K = 50
+    target_image = sql_model.get_target_image(img_name, K)
+    for patch in target_image.segments:
+        patch_indices = np.where(target_image.labels == patch.id)
+        best_visit = np.max(patch.visits)
+        print best_visit
+
+
