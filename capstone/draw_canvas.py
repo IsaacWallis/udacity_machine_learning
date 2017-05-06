@@ -88,8 +88,6 @@ def temp_test_image_draw():
     pyglet.app.run()
 
 if __name__ == "__main__":
-    #temp_test_image_draw()
-
     import sql_model
     img_name = 'small_butterfly'
     K = 50

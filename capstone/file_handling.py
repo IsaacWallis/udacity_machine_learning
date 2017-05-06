@@ -33,7 +33,6 @@ def get_source_indices():
             img_name = os.path.splitext(src_img)[0]
             img_num = img_name.split("_")[1]
             img_num_list.append(int(img_num))
-
     return img_num_list
 
 

@@ -40,7 +40,8 @@ if __name__ == "__main__":
         best_state = sql_model.State(source=visited_image.id,
                                      x=best_src_patch[0],
                                      y=best_src_patch[1],
-                                     searching_patch=searching_patch.id
+                                     target_patch=searching_patch.id,
+                                     loss=value
                                      )
         target_image.segments.append(searching_patch)
 

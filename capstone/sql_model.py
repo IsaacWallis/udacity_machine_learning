@@ -34,7 +34,7 @@ class SourceImage(Base):
 class State(Base):
     __tablename__ = 'state'
     id = Column(Integer, primary_key=True)
-    searching_patch = Column(Integer, ForeignKey("target_patch.id"), nullable=False)
+    target_patch = Column(Integer, ForeignKey("target_patch.id"), nullable=False)
     source = Column(Integer, ForeignKey("source_image.id"))
     x = Column(Integer)
     y = Column(Integer)
