@@ -19,9 +19,10 @@ def get_target_image(name):
 
 def get_source_image(index):
     path = os.path.join(image_dir, source_dir_name, "img_%i.jpg" % index)
-    img = Image.open(path)
-    img = np.array(img)
+    pil = Image.open(path)
+    img = np.array(pil)
     if not img.shape:
+        print "pil: ", pil.size, "np: ", img.shape
         raise IOError("Image %s shape is empty!" % path)
     return img
 

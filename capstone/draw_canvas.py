@@ -87,14 +87,29 @@ def temp_test_image_draw():
 
     pyglet.app.run()
 
+def draw_patch(src_pixels, target_indices):
+    pass
+
 if __name__ == "__main__":
-    import sql_model
+    import sql_model, file_handling
+    import sys
     img_name = 'small_butterfly'
     K = 50
     target_image = sql_model.get_target_image(img_name, K)
     for patch in target_image.segments:
         patch_indices = np.where(target_image.labels == patch.id)
-        best_visit = np.max(patch.visits)
-        print best_visit
+        best_visit_loss = sys.float_info.max
+        best_visit = None
+        for visit in patch.visits:
+            if visit.loss < best_visit_loss:
+                best_visit_loss = visit.loss
+                best_visit = visit
+        translated_x = patch_indices[0] + best_visit.x
+        translated_y = patch_indices[1] + best_visit.y
+        src_pix = file_handling.get_source_image(best_visit.source)
+        best_patch_pix = src_pix[translated_x, translated_y]
+
+        print best_patch_pix
+
 
 

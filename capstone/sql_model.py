@@ -35,10 +35,10 @@ class State(Base):
     __tablename__ = 'state'
     id = Column(Integer, primary_key=True)
     target_patch = Column(Integer, ForeignKey("target_patch.id"), nullable=False)
-    source = Column(Integer, ForeignKey("source_image.id"))
-    x = Column(Integer)
-    y = Column(Integer)
-    loss = Column(Float)
+    source = Column(Integer, ForeignKey("source_image.id"), nullable=False)
+    x = Column(Integer, nullable=False)
+    y = Column(Integer, nullable=False)
+    loss = Column(Float, nullable=False)
 
     def __repr__(self):
         return "<State(source='%s', x='%s', y='%s')>" % (self.source, self.x, self.y)
@@ -55,14 +55,14 @@ def get_session(name):
     return __SESSION__
 
 
-def get_target_image(name, k):
+def get_target_image(name, k = None):
     import numpy as np
     session = get_session(name)
     target_image = session.query(TargetImage).filter_by(name=name).first()
     if target_image is None:
         print "Making new project file"
         return make_project_file(name, k, session)
-    if k != (np.max(target_image.labels) + 1):
+    if k is not None and k != (np.max(target_image.labels) + 1):
         print "k differs, resaving target image"
         return make_project_file(name, k, session)
     return target_image
