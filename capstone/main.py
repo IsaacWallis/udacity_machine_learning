@@ -33,7 +33,10 @@ if __name__ == "__main__":
 
         visited_image = sql_model.SourceImage(id=src_img_index)
 
-        searching_patch = sql_model.TargetPatch(id=patch)
+        searching_patch = sql_model.get_session(img_name).query(sql_model.TargetPatch).filter_by(parent_name=img_name,id=patch).first()
+        if not searching_patch:
+            searching_patch = sql_model.TargetPatch(id=patch)
+
         best_state = sql_model.State(source=visited_image.id,
                                      x=best_src_patch[0],
                                      y=best_src_patch[1],

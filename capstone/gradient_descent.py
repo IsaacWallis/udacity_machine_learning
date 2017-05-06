@@ -74,6 +74,7 @@ class Env:
         return max_x, max_y, min_x, min_y
 
     def check_state(self, state):
+        #TODO: sometimes state plus agent index is still exceeding bounds of environment. Need to fix.
         agent_x, agent_y = self.agent_indices
         max_x, max_y, min_x, min_y = self.get_bounding_box(agent_x, agent_y)
         if state[0] - min_x < 0:

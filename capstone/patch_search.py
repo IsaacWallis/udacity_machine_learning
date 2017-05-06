@@ -96,9 +96,10 @@ def display_patch(env_pixels, patch_pixels, patch_indices, state):
     plt.show()
 
 if __name__ == "__main__":
+    import sql_model, file_handling
     img_name = 'small_butterfly'
     K = 150
-    seg_data = image_segment.get_segmented_img(img_name, K)
+    seg_data = sql_model.make_project_file(img_name, K)
     labels = seg_data["labels"]
     pixels = seg_data["pixels"]
 
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     patch_indices = (patch_indices[0] - np.min(patch_indices[0]),
                          patch_indices[1] - np.min(patch_indices[1]))
 
-    env_pixels = ndimage.imread('small_butterfly.jpg')
+    env_pixels = file_handling.get_target_image('small_butterfly')
     heatmap = grid_search(env_pixels, patch_pixels, patch_indices)
     plot_heatmap(heatmap)
     max_ndx = np.unravel_index(np.argmax(heatmap), heatmap.shape)

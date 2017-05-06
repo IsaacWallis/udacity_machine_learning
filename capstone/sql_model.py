@@ -70,12 +70,9 @@ def get_target_image(name, k):
 
 def make_project_file(name, k, session):
     import image_segment
-    import os
-    from scipy import ndimage
-    image_dir = "./images"
+    import file_handling
 
-    path = os.path.join(image_dir, name + ".jpg")
-    img = ndimage.imread(path)
+    img = file_handling.get_target_image(name)
     labels = image_segment.segment(img, k)
 
     target_image = TargetImage(name=name, pixels=img, labels=labels)
@@ -90,7 +87,7 @@ if __name__ == "__main__":
     target_image = get_target_image(name, k)
 
     source_image = SourceImage(id=20)
-    state = State(source=source_image.id, translation_x= 21, translation_y=22, loss=0.5)
+    state = State(source=source_image.id, translation_x=21, translation_y=22, loss=0.5)
     print state
 
     target_patch = TargetPatch(visits=[state])
@@ -107,4 +104,3 @@ if __name__ == "__main__":
 
     t_i = get_target_image(name, k)
     print t_i.segments
-

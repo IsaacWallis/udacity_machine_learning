@@ -1,8 +1,8 @@
 import os
 import pickle
-from scipy import ndimage
 import pandas as pd
-import sqlalchemy
+from PIL import Image
+import numpy as np
 
 segmented_dir = "./segmented"
 main_dir = "./progress"
@@ -67,15 +67,17 @@ def read_segment_file(name):
 
 def get_target_image(name):
     path = os.path.join(image_dir, name + ".jpg")
-    img = ndimage.imread(path)
+    img = Image.open(path)
+    img = np.array(img)
     return img
 
 
 def get_source_image(index):
     path = os.path.join(image_dir, source_dir_name, "img_%i.jpg" % index)
-    img = ndimage.imread(path)
+    img = Image.open(path)
+    img = np.array(img)
     if not img.shape:
-        raise IOError("Image shape is empty!")
+        raise IOError("Image %s shape is empty!" % path)
     return img
 
 
