@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
-Session = sessionmaker()
+__SESSION__ = None
 
 
 class TargetImage(Base):
@@ -28,34 +28,36 @@ class TargetPatch(Base):
 
 class SourceImage(Base):
     __tablename__ = 'source_image'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, nullable=False)
 
 
 class State(Base):
     __tablename__ = 'state'
     id = Column(Integer, primary_key=True)
-    searching_patch_name = Column(Integer, ForeignKey("target_patch.id"))
+    searching_patch = Column(Integer, ForeignKey("target_patch.id"), nullable=False)
     source = Column(Integer, ForeignKey("source_image.id"))
-    translation_x = Column(Integer)
-    translation_y = Column(Integer)
+    x = Column(Integer)
+    y = Column(Integer)
     loss = Column(Float)
 
     def __repr__(self):
-        return "<State(source='%s', x='%s', y='%s')>" % (self.id, self.translation_x, self.translation_y)
+        return "<State(source='%s', x='%s', y='%s')>" % (self.source, self.x, self.y)
 
 
-def set_sql_path(name):
-    engine = create_engine('sqlite:///progress/%s.sqlite' % name, echo=False)
-    Session.configure(bind=engine)
-    Base.metadata.create_all(engine)
-    return Session()
+def get_session(name):
+    global __SESSION__
+    if not __SESSION__:
+        Session = sessionmaker()
+        engine = create_engine('sqlite:///progress/%s.sqlite' % name, echo=False)
+        Session.configure(bind=engine)
+        Base.metadata.create_all(engine)
+        __SESSION__ = Session()
+    return __SESSION__
 
-def get_session():
-    return Session()
 
 def get_target_image(name, k):
     import numpy as np
-    session = set_sql_path(name)
+    session = get_session(name)
     target_image = session.query(TargetImage).filter_by(name=name).first()
     if target_image is None:
         print "Making new project file"
@@ -81,7 +83,28 @@ def make_project_file(name, k, session):
     session.commit()
     return target_image
 
+
 if __name__ == "__main__":
     name = "small_butterfly"
     k = 60
-    print get_target_image(name, k)
+    target_image = get_target_image(name, k)
+
+    source_image = SourceImage(id=20)
+    state = State(source=source_image.id, translation_x= 21, translation_y=22, loss=0.5)
+    print state
+
+    target_patch = TargetPatch(visits=[state])
+    get_session().add(target_patch)
+    get_session().flush()
+
+    print target_patch
+    target_image.segments.append(target_patch)
+    print target_image.segments
+
+    get_session().merge(target_image)
+    get_session().flush()
+    get_session().commit()
+
+    t_i = get_target_image(name, k)
+    print t_i.segments
+

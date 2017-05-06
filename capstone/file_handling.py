@@ -11,13 +11,14 @@ source_dir_name = "source"
 segment_file_name = "segment.pickle"
 progress_file_name = "progress.pickle"
 
+
 def get_project_directory(name):
     if not os.path.exists(main_dir):
         os.makedirs(main_dir)
     project_path = os.path.join(main_dir, name)
     if not os.path.exists(project_path):
         os.makedirs(project_path)
-    return project_path    
+    return project_path
 
 
 def project_exists(name):
@@ -73,6 +74,8 @@ def get_target_image(name):
 def get_source_image(index):
     path = os.path.join(image_dir, source_dir_name, "img_%i.jpg" % index)
     img = ndimage.imread(path)
+    if not img.shape:
+        raise IOError("Image shape is empty!")
     return img
 
 
@@ -85,6 +88,7 @@ def get_source_indices():
             img_num_list.append(int(img_num))
 
     return img_num_list
+
 
 def get_saved_progress(project_name, patch):
     path = os.path.join(get_project_directory(project_name), progress_file_name)
@@ -102,6 +106,7 @@ def add_progress(name, patch, state, loss, t):
     current_t = progress.loc[patch]["t"]
     progress.loc[patch]["t"] = [state, loss, current_t + t]
     progress.to_csv(path)
+
 
 if __name__ == "__main__":
     pass

@@ -12,10 +12,10 @@ if __name__ == "__main__":
     K = 50
     target_image = sql_model.get_target_image(img_name, K)
     labels = target_image.labels
+    sorted_patches = image_segment.sort_patch_indices(labels)
     pixels = target_image.pixels
 
     img_num_list = file_handling.get_source_indices()
-    sorted_patches = image_segment.sort_patch_indices(labels)
 
     print "searching..."
     count = 0
@@ -33,17 +33,17 @@ if __name__ == "__main__":
 
         visited_image = sql_model.SourceImage(id=src_img_index)
 
-        best_state = sql_model.State(source=visited_image.id,
-                                     translation_x=best_src_patch[0],
-                                     translation_y=best_src_patch[1]
-                                     )
-
         searching_patch = sql_model.TargetPatch(id=patch)
-
-        searching_patch.visits.append(best_state)
+        best_state = sql_model.State(source=visited_image.id,
+                                     x=best_src_patch[0],
+                                     y=best_src_patch[1],
+                                     searching_patch=searching_patch.id
+                                     )
         target_image.segments.append(searching_patch)
-        sql_model.get_session().merge(target_image)
-        sql_model.get_session().commit()
+
+        sql_model.get_session(img_name).add(best_state)
+        sql_model.get_session(img_name).merge(target_image)
+        sql_model.get_session(img_name).commit()
 
         print "%i: %s %s" % (count, searching_patch, best_state)
         count += 1
