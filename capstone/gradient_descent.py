@@ -24,7 +24,11 @@ class Env:
         if heatmap_size_y < 0 or heatmap_size_x < 0:
             assert "Agent of size %i %i too large for env of size %i %i" % \
                    (agent_max_x, agent_max_y, image.shape[0], image.shape[1])
-        self.heatmap = np.zeros((heatmap_size_x, heatmap_size_y))
+        try:
+            self.heatmap = np.zeros((heatmap_size_x, heatmap_size_y))
+        except ValueError as err:
+            print('negative heatmap size vals: %i %i' % (heatmap_size_x, heatmap_size_y))
+            raise err
         # defines small step value for each element of the state
         self.epsilon = {
             0: np.array([1, 0]),
@@ -61,30 +65,30 @@ class Env:
         agent_x, agent_y = self.agent_indices
         max_x, max_y, min_x, min_y = self.get_bounding_box(agent_x, agent_y)
         return np.array([
-            np.random.randint(min_x, self.image.shape[0] - max_x),
-            np.random.randint(min_y, self.image.shape[1] - max_y)
+            np.random.randint(1, self.image.shape[0] - max_x - 2),
+            np.random.randint(1, self.image.shape[1] - max_y - 2)
         ], dtype=np.float64)
 
     @staticmethod
     def get_bounding_box(indices_x, indices_y):
         min_x = np.min(indices_x)
         min_y = np.min(indices_y)
+
         max_x = np.max(indices_x)
         max_y = np.max(indices_y)
         return max_x, max_y, min_x, min_y
 
     def check_state(self, state):
-        #TODO: sometimes state plus agent index is still exceeding bounds of environment. Need to fix.
         agent_x, agent_y = self.agent_indices
         max_x, max_y, min_x, min_y = self.get_bounding_box(agent_x, agent_y)
         if state[0] - min_x < 0:
-            state[0] = min_x
-        if state[0] + max_x > self.image.shape[0]:
-            state[0] = max_x
+            state[0] = self.image.shape[0] + min_x + 1
+        if state[0] + max_x >= self.image.shape[0] - 1:
+            state[0] = self.image.shape[0] - max_x - 2
         if state[1] - min_y < 0:
-            state[1] = min_y
-        if state[1] + max_y > self.image.shape[1]:
-            state[1] = max_y
+            state[1] = self.image.shape[1] + min_y + 1
+        if state[1] + max_y >= self.image.shape[1] - 1:
+            state[1] = self.image.shape[1] - max_y - 2
         return state
 
     def start_agent(self, initState=None, gamma=50., momentum=0.9, maxT=1000, plot=False):
@@ -96,7 +100,6 @@ class Env:
         error = self.calculate_error(state)
 
         count = 0
-        start = time.time()
 
         velocity = np.zeros(state.shape)
         smallest_error = sys.float_info.max
@@ -107,6 +110,7 @@ class Env:
         time_axis = []
 
         for i in range(maxT):
+            state = self.check_state(state)
             gradients = self.get_gradients(state)
             velocity = (momentum * velocity) + (gamma * gradients)
             state = state - velocity
@@ -126,6 +130,7 @@ class Env:
             error = error_prime
             count += 1
         if plot:
+            from matplotlib import pyplot as plt
             plt.plot(time_axis, error_axis)
             plt.show()
         return best_state, smallest_error, convergence_at_best
@@ -146,15 +151,14 @@ def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
         state, reward, t = env.start_agent(initState=initial_state, maxT=max_t)
         data_frame.loc[i] = [initial_state, state, reward, t]
     for i in range(200):
-        best = data_frame["r_prime"].idxmax()
-        worst = data_frame["r_prime"].idxmin()
+        worst = data_frame["r_prime"].idxmax()
+        best = data_frame["r_prime"].idxmin()
         best_init_state = data_frame.iloc[best]["s"]
         worst_found_state = data_frame.iloc[worst]["s_prime"]
         avg = (best_init_state + worst_found_state) / 2
         state, reward, t = env.start_agent(initState=avg, maxT=max_t)
         data_frame.iloc[worst] = [avg, state, reward, t]
     best_final_index = data_frame["r_prime"].idxmax()
-    data_frame.iloc[best_final_index]
 
     # import patch_search
     # patch_search.plot_heatmap(env.heatmap)

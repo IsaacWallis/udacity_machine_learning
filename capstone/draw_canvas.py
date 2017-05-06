@@ -107,9 +107,15 @@ if __name__ == "__main__":
         translated_x = patch_indices[0] + best_visit.x
         translated_y = patch_indices[1] + best_visit.y
         src_pix = file_handling.get_source_image(best_visit.source)
-        best_patch_pix = src_pix[translated_x, translated_y]
 
-        print best_patch_pix
+        try:
+            best_patch_pix = src_pix[translated_x, translated_y]
+            print best_patch_pix
+        except IndexError as err:
+            print src_pix.shape, np.max(patch_indices[0]), best_visit.x, np.max(patch_indices[1]), best_visit.y
+            print best_visit.source, patch.id
+            raise err
+
 
 
 

@@ -23,7 +23,7 @@ def get_source_image(index):
     img = np.array(pil)
     if not img.shape:
         print "pil: ", pil.size, "np: ", img.shape
-        raise IOError("Image %s shape is empty!" % path)
+        raise IOError("Image %s shape is empty! Check to make sure it is a jpeg." % path)
     return img
 
 
