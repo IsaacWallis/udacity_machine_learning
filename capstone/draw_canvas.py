@@ -53,15 +53,11 @@ class Background:
                              )
 
 
-def temp_test_image_draw():
-    import file_handling
-    env_pixels = file_handling.get_source_image(2)
-    canvas = Image.new('RGBA', (env_pixels.shape[1], env_pixels.shape[0]), (0, 0, 0, 255))
+def temp_test_image_draw(pixels):
+    window = pyglet.window.Window(pixels.shape[1], pixels.shape[0])
 
-    window = pyglet.window.Window(env_pixels.shape[1], env_pixels.shape[0])
-
-    pix_reshaped = np.flipud(env_pixels).flatten()
-    x_indices, y_indices = np.indices(env_pixels.shape[:2])
+    pix_reshaped = np.flipud(pixels).flatten()
+    x_indices, y_indices = np.indices(pixels.shape[:2])
     x_indices = x_indices.flatten()
     y_indices = y_indices.flatten()
     indices_reshaped = np.empty((x_indices.size + y_indices.size), dtype=x_indices.dtype)
@@ -96,6 +92,7 @@ if __name__ == "__main__":
     img_name = 'small_butterfly'
     K = 50
     target_image = sql_model.get_target_image(img_name, K)
+    temp_test_image_draw(target_image.pixels)
     for patch in target_image.segments:
         labelled_indices = np.where(target_image.labels == patch.id)
         patch_indices = (labelled_indices[0] - np.min(labelled_indices[0]),
@@ -111,14 +108,5 @@ if __name__ == "__main__":
         translated_y = patch_indices[1] + best_visit.y
         src_pix = file_handling.get_source_image(best_visit.source)
 
-        try:
-            best_patch_pix = src_pix[translated_x, translated_y]
-            #print best_patch_pix
-        except IndexError as err:
-            print src_pix.shape, np.max(patch_indices[0]), best_visit.x, np.max(patch_indices[1]), best_visit.y
-            print best_visit.source, patch.id
-            raise err
-
-
-
-
+        best_patch_pix = src_pix[translated_x, translated_y]
+        print best_patch_pix.shape
