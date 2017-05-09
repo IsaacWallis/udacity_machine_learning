@@ -97,7 +97,10 @@ if __name__ == "__main__":
     K = 50
     target_image = sql_model.get_target_image(img_name, K)
     for patch in target_image.segments:
-        patch_indices = np.where(target_image.labels == patch.id)
+        labelled_indices = np.where(target_image.labels == patch.id)
+        patch_indices = (labelled_indices[0] - np.min(labelled_indices[0]),
+                         labelled_indices[1] - np.min(labelled_indices[1]))
+
         best_visit_loss = sys.float_info.max
         best_visit = None
         for visit in patch.visits:
@@ -110,7 +113,7 @@ if __name__ == "__main__":
 
         try:
             best_patch_pix = src_pix[translated_x, translated_y]
-            print best_patch_pix
+            #print best_patch_pix
         except IndexError as err:
             print src_pix.shape, np.max(patch_indices[0]), best_visit.x, np.max(patch_indices[1]), best_visit.y
             print best_visit.source, patch.id
