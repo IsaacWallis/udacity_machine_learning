@@ -53,46 +53,16 @@ class Background:
                              )
 
 
-def temp_test_image_draw(pixels):
-    window = pyglet.window.Window(pixels.shape[1], pixels.shape[0])
-
-    pix_reshaped = np.flipud(pixels).flatten()
-    x_indices, y_indices = np.indices(pixels.shape[:2])
-    x_indices = x_indices.flatten()
-    y_indices = y_indices.flatten()
-    indices_reshaped = np.empty((x_indices.size + y_indices.size), dtype=x_indices.dtype)
-    indices_reshaped[0::2] = y_indices
-    indices_reshaped[1::2] = x_indices
-
-    label = pyglet.text.Label('Hello, world',
-                              font_name='Times New Roman',
-                              font_size=36,
-                              x=window.width // 2, y=window.height // 2,
-                              anchor_x='center', anchor_y='center')
-
-    vertex_list = pyglet.graphics.vertex_list(len(pix_reshaped) / 3,
-                                              ('v2i', indices_reshaped),
-                                              ('c3B', pix_reshaped)
-                                              )
-
-    @window.event
-    def on_draw():
-        window.clear()
-        vertex_list.draw(pyglet.gl.GL_POINTS)
-        label.draw()
-
-    pyglet.app.run()
-
-def draw_patch(src_pixels, target_indices):
-    pass
-
 if __name__ == "__main__":
     import sql_model, file_handling
     import sys
+    import vbo
+
     img_name = 'small_butterfly'
     K = 50
     target_image = sql_model.get_target_image(img_name, K)
-    temp_test_image_draw(target_image.pixels)
+    canvas_image = np.copy(target_image.pixels)
+    vbo.setup_window(target_image.pixels.shape)
     for patch in target_image.segments:
         labelled_indices = np.where(target_image.labels == patch.id)
         patch_indices = (labelled_indices[0] - np.min(labelled_indices[0]),
@@ -109,4 +79,5 @@ if __name__ == "__main__":
         src_pix = file_handling.get_source_image(best_visit.source)
 
         best_patch_pix = src_pix[translated_x, translated_y]
-        print best_patch_pix.shape
+        canvas_image[labelled_indices] = best_patch_pix
+    vbo.draw_target_image(canvas_image)
