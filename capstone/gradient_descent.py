@@ -137,6 +137,15 @@ class Env:
     def get_heatmap(self):
         return self.heatmap
 
+    def estimate_error(self):
+        n = 200
+        samples = []
+        for i in range(n):
+            random_state = self.get_random_state()
+            random_state_loss = self.calculate_error(random_state)
+            samples.append(random_state_loss)
+        return np.mean(samples)
+
 
 def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
     env = Env(env_pixels, patch_pixels, patch_indices)
@@ -166,18 +175,32 @@ def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
 
 if __name__ == "__main__":
     import sql_model
+    import file_handling
+    import sys
     img_name = 'butterfly'
     K = 150
     target_image = sql_model.get_target_image(img_name, K)
     labels = target_image.labels
-    env_pixels = target_image.pixels
+    tgt_pixels = target_image.pixels
 
-    label = 12
+    label = 30
     patch_indices = np.where(labels == label)
-    patch_pixels = env_pixels[patch_indices]
+    patch_pixels = tgt_pixels[patch_indices]
     indices_at_origin = (patch_indices[0] - np.min(patch_indices[0]),
                          patch_indices[1] - np.min(patch_indices[1]))
-    print multi_gradient_descent(env_pixels, patch_pixels, indices_at_origin, 5)
+    img_num_list = file_handling.get_source_indices()
+    min_loss = sys.float_info.max
+    for img in img_num_list:
+        env_pixels = file_handling.get_source_image(img)
+        env = Env(env_pixels, patch_pixels, patch_indices)
+        loss = env.estimate_error()
+        if loss < min_loss:
+            min_loss = loss
+            print "new best", img, loss
+
+
+
+    #print multi_gradient_descent(env_pixels, patch_pixels, indices_at_origin, 5)
     # heatmap =  grad_descent_heatmap(env_pixels, patch_pixels, patch_indices)
     # import patch_search
     # patch_search.plot_heatmap(heatmap)
