@@ -37,6 +37,7 @@ class Env:
 
     def calculate_error(self, state):
         rounded = np.rint(state).astype(np.int8)
+        state = self.check_state(rounded)
         x_indices = self.agent_indices[0] + rounded[0]
         y_indices = self.agent_indices[1] + rounded[1]
         env_pix = self.image[x_indices, y_indices, :] / 255.
@@ -110,11 +111,9 @@ class Env:
         time_axis = []
 
         for i in range(maxT):
-            state = self.check_state(state)
             gradients = self.get_gradients(state)
             velocity = (momentum * velocity) + (gamma * gradients)
             state = state - velocity
-            state = self.check_state(state)
             error_prime = self.calculate_error(state)
             state_ndx = np.round(state).astype(np.int8)
             self.heatmap[state_ndx[0], state_ndx[1]] = error_prime
@@ -148,16 +147,16 @@ def multi_gradient_descent(env_pixels, patch_pixels, patch_indices, num_agents):
     for i in range(num_agents):
         agent_dict[i] = {}
         initial_state = env.get_random_state()
-        state, reward, t = env.start_agent(initState=initial_state, maxT=max_t)
-        data_frame.loc[i] = [initial_state, state, reward, t]
+        state, error, t = env.start_agent(initState=initial_state, maxT=max_t)
+        data_frame.loc[i] = [initial_state, state, error, t]
     for i in range(200):
-        worst = data_frame["r_prime"].idxmax()
-        best = data_frame["r_prime"].idxmin()
-        best_init_state = data_frame.iloc[best]["s"]
-        worst_found_state = data_frame.iloc[worst]["s_prime"]
+        max_error = data_frame["r_prime"].idxmax()
+        min_error = data_frame["r_prime"].idxmin()
+        best_init_state = data_frame.iloc[min_error]["s"]
+        worst_found_state = data_frame.iloc[max_error]["s_prime"]
         avg = (best_init_state + worst_found_state) / 2
-        state, reward, t = env.start_agent(initState=avg, maxT=max_t)
-        data_frame.iloc[worst] = [avg, state, reward, t]
+        state, error, t = env.start_agent(initState=avg, maxT=max_t)
+        data_frame.iloc[max_error] = [avg, state, error, t]
     best_final_index = data_frame["r_prime"].idxmax()
 
     # import patch_search
