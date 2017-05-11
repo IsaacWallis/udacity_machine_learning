@@ -8,8 +8,8 @@ import sql_model
 src_dir = "./source"
 
 if __name__ == "__main__":
-    img_name = 'small_butterfly'
-    K = 50
+    img_name = 'australian_butterfly'
+    K = 150
     target_image = sql_model.get_target_image(img_name, K)
     target_labels = target_image.labels
     sorted_patches = image_segment.sort_patch_indices(target_labels)
@@ -54,5 +54,5 @@ if __name__ == "__main__":
             sql_model.get_session(img_name).merge(target_image)
             sql_model.get_session(img_name).commit()
 
-            print "%i: %s %s" % (count, searching_patch, best_state)
+            print "%i: %s %s %s" % (count, searching_patch, best_state, value)
             count += 1

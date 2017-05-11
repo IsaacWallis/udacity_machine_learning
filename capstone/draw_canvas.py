@@ -58,8 +58,8 @@ if __name__ == "__main__":
     import sys
     import vbo
 
-    img_name = 'small_butterfly'
-    K = 50
+    img_name = 'australian_butterfly'
+    K = 150
     target_image = sql_model.get_target_image(img_name, K)
     canvas_image = np.copy(target_image.pixels)
     vbo.setup_window(target_image.pixels.shape)
@@ -78,6 +78,9 @@ if __name__ == "__main__":
         translated_y = patch_indices[1] + best_visit.y
         src_pix = file_handling.get_source_image(best_visit.source)
 
-        best_patch_pix = src_pix[translated_x, translated_y]
-        canvas_image[labelled_indices] = best_patch_pix
+        try:
+            best_patch_pix = src_pix[translated_x, translated_y]
+            canvas_image[labelled_indices] = best_patch_pix
+        except IndexError as err:
+            print err.message
     vbo.draw_target_image(canvas_image)

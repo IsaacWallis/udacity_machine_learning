@@ -16,8 +16,8 @@ class Env:
         agent_max_x = np.max(agent_indices[0])
         agent_max_y = np.max(agent_indices[1])
         try:
-            heatmap_size_x = image.shape[0] - agent_max_x
-            heatmap_size_y = image.shape[1] - agent_max_y
+            heatmap_size_x = image.shape[0]# - agent_max_x + 1
+            heatmap_size_y = image.shape[1]# - agent_max_y + 1
         except IndexError:
             raise IndexError("shape %s max x %i max y %i" % (image.shape, agent_max_x, agent_max_y))
 
