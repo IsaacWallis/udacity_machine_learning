@@ -18,8 +18,8 @@ def display_all_patches(img, labels):
                     alpha=.5,
                     marker=",",
                     s=5)
-        plt.contour(labels == l, contours=1,
-                    colors=[color], alpha=1., linewidths=0.1)
+        #plt.contour(labels == l, contours=1,
+        #            colors=[color], alpha=1., linewidths=0.1)
     plt.imshow(img, alpha=.5)
     plt.show()
 

@@ -34,6 +34,12 @@ def segment(img, k):
     return labels
 
 
+def felgen(img):
+    from skimage import segmentation
+    #return segmentation.quickshift(img, max_dist=10000, sigma=100.0)
+
+    return segmentation.felzenszwalb(img, scale=10, sigma=10)
+
 def sort_patch_indices(labels):
     max_label = np.max(labels)
     hist = np.histogram(labels, bins=max_label)
@@ -44,5 +50,20 @@ def sort_patch_indices(labels):
 if __name__ == "__main__":
     import sql_model
     import plot_utils
-    target_image = sql_model.get_target_image('small_butterfly', 50)
-    plot_utils.display_all_patches(target_image.pixels, target_image.labels)
+    import file_handling
+    import time
+    import skimage
+    from skimage import color
+    name ='australian_butterfly'
+    img = file_handling.get_target_image(name)
+
+    starting = time.time()
+    lab = color.rgb2lab(img)
+    print "starting"
+    labels = felgen(lab)
+    print "done", time.time() - starting
+    print np.max(labels)
+    #labels = segment(lab, 150)
+    #labels = image_segment.segment(img, k)
+    #target_image = sql_model.get_target_image('small_butterfly', 50)
+    plot_utils.display_all_patches(img, labels)
