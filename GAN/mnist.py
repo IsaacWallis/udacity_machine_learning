@@ -130,38 +130,6 @@ def train_generator():
         validation_data=(X_val, y_val))
 
 
-def show_generated_images():
-    gen_inputs = Input(shape=(100, ))
-    gen_layers = generator_layers(gen_inputs, trainable=False)
-    generator = Model(inputs=gen_inputs, outputs=gen_layers)
-    generator.compile(
-        optimizer='rmsprop',
-        loss='categorical_crossentropy',
-        metrics=['accuracy'])
-
-    if pathlib.Path("./adversarial.hdf5").is_file():
-        generator.load_weights("adversarial.hdf5", by_name=True)
-
-    frames = random((5, 100))
-    fakes = generator.predict(frames, verbose=1)
-    fakes = numpy.squeeze(fakes)
-
-    reals = MNIST[5:, :, :]
-
-    w = 10
-    h = 10
-    fig = plt.figure(figsize=(8, 8))
-    rows = 2
-    cols = 6
-    for i in range(1, cols):
-        ax = fig.add_subplot(rows, cols, i)
-        plt.imshow(fakes[i - 1])
-    for i in range(1, cols):
-        ax = fig.add_subplot(rows, cols, i + cols)
-        plt.imshow(reals[i - 1])
-    plt.show()
-
-
 def generator_model(trainable):
     log.info("MAKING GENERATOR MODEL")
     gen_inputs = Input(shape=(100, ))
