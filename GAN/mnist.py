@@ -98,20 +98,22 @@ def train_generator():
         optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
     adversarial.summary()
 
-    if pathlib.Path("./discriminator.hdf5").is_file():
-        log.info("LOADING DISCRIMINATOR WEIGHTS")
-        adversarial.load_weights("discriminator.hdf5", by_name=True)
     if pathlib.Path("./adversarial.hdf5").is_file():
         log.info("LOADING ADVERSARIAL WEIGHTS")
         adversarial.load_weights("adversarial.hdf5", by_name=True)
+    if pathlib.Path("./discriminator.hdf5").is_file():
+        log.info("LOADING DISCRIMINATOR WEIGHTS")
+        adversarial.load_weights("discriminator.hdf5", by_name=True)
 
     inputs = random((SAMPLE_SIZE, 100))
     labels = numpy.ones(SAMPLE_SIZE)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        inputs, labels, test_size=0.2, random_state=SEED)
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_train, y_train, test_size=0.2, random_state=SEED)
+    data_splits = get_generator_splits(inputs, labels)
+
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     inputs, labels, test_size=0.2, random_state=SEED)
+    # X_train, X_val, y_train, y_val = train_test_split(
+    #     X_train, y_train, test_size=0.2, random_state=SEED)
 
     checkpointer = keras.callbacks.ModelCheckpoint(
         "adversarial.hdf5",
@@ -125,13 +127,16 @@ def train_generator():
         monitor='val_loss', patience=PATIENCE, min_delta=.02, verbose=1)
 
     adversarial.fit(
-        X_train,
-        y_train,
+        data_splits["train"][0],
+        data_splits["train"][1],
         epochs=10,
         batch_size=32,
         verbose=1,
         callbacks=[checkpointer, stopper],
-        validation_data=(X_val, y_val))
+        validation_data=(data_splits["val"][0], data_splits["val"][1]))
+
+    scores = adversarial.evaluate(data_splits["test"][0], data_splits["test"][1])
+    log.info("METRICS: %s %s" % (adversarial.metrics_names, scores))
 
 
 def generator_model(trainable):
@@ -162,20 +167,11 @@ def get_reals(quantity):
     reals = numpy.expand_dims(reals, axis=3)
     return reals    
 
+def get_discriminator_splits(inputs, labels):
+    training_bound = int(len(inputs) * 0.7)
+    test_bound = int(len(inputs) * 0.8)
 
-def get_data_sets(sample_size):
-    """returns training, test, and validation sets"""
-    log.info("MAKING DATA SETS")
-    training_bound = int(sample_size * 0.7)
-    test_bound = int(sample_size * 0.8)
-
-    fakes = generate_fakes(int(sample_size / 2))
-    reals = get_reals(int(sample_size / 2))
-    total = numpy.concatenate((reals, fakes))
-    real_labels = numpy.ones([len(reals)])
-    fake_labels = numpy.zeros([len(fakes)])
-    total_labels = numpy.concatenate((real_labels, fake_labels))
-    shuffled, shuffled_labels = shuffle(total, total_labels)
+    shuffled, shuffled_labels = shuffle(inputs, labels)
 
     X_train = shuffled[:training_bound, :, :]
     X_val = shuffled[training_bound:test_bound, :, :]
@@ -190,6 +186,40 @@ def get_data_sets(sample_size):
         "test": [X_test, y_test],
         "val": [X_val, y_val]
     }
+
+def get_generator_splits(inputs, labels):
+    training_bound = int(len(inputs) * 0.7)
+    test_bound = int(len(inputs) * 0.8)
+
+    shuffled, shuffled_labels = shuffle(inputs, labels)
+
+    X_train = shuffled[:training_bound, :]
+    X_val = shuffled[training_bound:test_bound, :]
+    X_test = shuffled[test_bound:, :]
+
+    y_train = shuffled_labels[:training_bound]
+    y_val = shuffled_labels[training_bound:test_bound]
+    y_test = shuffled_labels[test_bound:]
+
+    return {
+        "train": [X_train, y_train],
+        "test": [X_test, y_test],
+        "val": [X_val, y_val]
+    }
+
+def get_data_sets(sample_size):
+    """returns training, test, and validation sets"""
+    log.info("MAKING DATA SETS")
+
+    fakes = generate_fakes(int(sample_size / 2))
+    reals = get_reals(int(sample_size / 2))
+    total = numpy.concatenate((reals, fakes))
+    real_labels = numpy.ones([len(reals)])
+    fake_labels = numpy.zeros([len(fakes)])
+    total_labels = numpy.concatenate((real_labels, fake_labels))
+
+    return get_splits(total, total_labels)
+
 
 
 def discriminator_model(trainable):
@@ -259,6 +289,10 @@ def show_classified_images():
     plt.show()
 
 
+# for i in range(10):
+#     train_discriminator()
+#     train_generator()
+
 train_generator()
-#train_discriminator()
+# train_discriminator()
 show_classified_images()
