@@ -92,17 +92,21 @@ def generator_layers(inputs, trainable=True):
 def train_generator():
     gen_inputs = Input(shape=(100, ))
     gen_layers = generator_layers(gen_inputs, trainable=True)
-    disc_layers = discriminator_layers(gen_layers, trainable=True)
+    disc_layers = discriminator_layers(gen_layers, trainable=False)
     adversarial = Model(inputs=gen_inputs, outputs=disc_layers)
     adversarial.compile(
         optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
     adversarial.summary()
 
+    if pathlib.Path("./discriminator.hdf5").is_file():
+        log.info("LOADING DISCRIMINATOR WEIGHTS")
+        adversarial.load_weights("discriminator.hdf5", by_name=True)
     if pathlib.Path("./adversarial.hdf5").is_file():
+        log.info("LOADING ADVERSARIAL WEIGHTS")
         adversarial.load_weights("adversarial.hdf5", by_name=True)
 
-    inputs = random((SAMPLES, 100))
-    labels = numpy.ones(SAMPLES)
+    inputs = random((SAMPLE_SIZE, 100))
+    labels = numpy.ones(SAMPLE_SIZE)
 
     X_train, X_test, y_train, y_test = train_test_split(
         inputs, labels, test_size=0.2, random_state=SEED)
@@ -255,5 +259,6 @@ def show_classified_images():
     plt.show()
 
 
+train_generator()
 #train_discriminator()
 show_classified_images()
