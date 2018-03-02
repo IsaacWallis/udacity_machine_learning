@@ -167,10 +167,6 @@ def generator_model(trainable):
     gen_inputs = Input(shape=(100, ))
     gen_layers = generator_layers(gen_inputs, trainable=trainable)
     generator = Model(inputs=gen_inputs, outputs=gen_layers)
-    generator.compile(
-        optimizer='rmsprop',
-        loss='categorical_crossentropy',
-        metrics=['accuracy'])
     if pathlib.Path("./adversarial.hdf5").is_file():
         log.info("LOADING GENERATOR WEIGHTS")
         generator.load_weights("adversarial.hdf5", by_name=True)
@@ -179,6 +175,10 @@ def generator_model(trainable):
 
 def generate_fakes(quantity):
     generator = generator_model(False)
+    generator.compile(
+        optimizer='rmsprop',
+        loss='categorical_crossentropy',
+        metrics=['accuracy'])
     noise = random((quantity, 100))
     log.info("GENERATING FAKES")
     fakes = generator.predict(noise, verbose=1)
@@ -225,9 +225,6 @@ def discriminator_model(trainable):
     disc_inputs = Input(shape=(28, 28, 1))
     disc_layers = discriminator_layers(disc_inputs, trainable=trainable)
     discriminator = Model(inputs=disc_inputs, outputs=disc_layers)
-    discriminator.compile(
-        optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
-    discriminator.summary()
     if pathlib.Path("./discriminator.hdf5").is_file():
         log.info("LOADING DISCRIMINATOR WEIGHTS")
         discriminator.load_weights("discriminator.hdf5", by_name=True)
@@ -237,6 +234,8 @@ def discriminator_model(trainable):
 def train_discriminator():
     data_sets = get_data_sets(SAMPLE_SIZE)
     discriminator = discriminator_model(True)
+    discriminator.compile(
+        optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
     checkpointer = keras.callbacks.ModelCheckpoint(
         "discriminator.hdf5",
         monitor='val_loss',
@@ -270,6 +269,8 @@ def show_classified_images():
     total = shuffle(total)
 
     discriminator = discriminator_model(False)
+    discriminator.compile(
+        optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
     classes = discriminator.predict(total, verbose=1)
 
     total = numpy.squeeze(total)
