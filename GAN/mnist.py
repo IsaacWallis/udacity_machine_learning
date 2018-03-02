@@ -267,7 +267,7 @@ def show_classified_images():
     total = numpy.squeeze(total)
     total = numpy.expand_dims(total, axis=3)
 
-    shuffle(total)
+    total = shuffle(total)
 
     discriminator = discriminator_model(False)
     classes = discriminator.predict(total, verbose=1)
@@ -279,10 +279,10 @@ def show_classified_images():
     fig = plt.figure(figsize=(8, 8))
     rows = 2
     cols = 5
-    for i in range(1, rows * cols):
+    for i in range(1, rows * cols + 1):
         ax = fig.add_subplot(rows, cols, i)
-        ax.set_title("Class: %i" % classes[i])
-        plt.imshow(total[i])
+        ax.set_title("Class: %i" % classes[i-1])
+        plt.imshow(total[i-1])
     plt.show()
 
 
